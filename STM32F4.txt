@@ -1,0 +1,86 @@
+Configuration	STM32F4
+STM32CubeMX 	6.7.0
+Date	03/01/2023
+MCU	STM32F401CBUx
+
+
+
+PERIPHERALS	MODES	FUNCTIONS	PINS
+TIM1	Internal Clock	TIM1_VS_ClockSourceINT	VP_TIM1_VS_ClockSourceINT
+USART1	Asynchronous	USART1_RX	PB7
+USART1	Asynchronous	USART1_TX	PB6
+
+
+
+Pin Nb	PINs	FUNCTIONs	LABELs
+10	PA0-WKUP	GPIO_Input	
+11	PA1	GPIO_Input	
+12	PA2	GPIO_Input	
+13	PA3	GPIO_Input	
+14	PA4	GPIO_Input	
+15	PA5	GPIO_Input	
+16	PA6	GPIO_Input	
+17	PA7	GPIO_Output	
+18	PB0	GPIO_Output	
+19	PB1	GPIO_Output	
+20	PB2	GPIO_Output	
+29	PA8	GPIO_Output	
+30	PA9	GPIO_Output	
+31	PA10	GPIO_Output	
+32	PA11	GPIO_Output	
+39	PB3	GPIO_Output	
+42	PB6	USART1_TX	
+43	PB7	USART1_RX	
+PERIPHERALS	MODES	FUNCTIONS	PINS
+TIM1	Internal Clock	TIM1_VS_ClockSourceINT	VP_TIM1_VS_ClockSourceINT
+USART1	Asynchronous	USART1_RX	PB7
+USART1	Asynchronous	USART1_TX	PB6
+
+
+
+Pin Nb	PINs	FUNCTIONs	LABELs
+10	PA0-WKUP	GPIO_Input	
+11	PA1	GPIO_Input	
+12	PA2	GPIO_Input	
+13	PA3	GPIO_Input	
+14	PA4	GPIO_Input	
+15	PA5	GPIO_Input	
+16	PA6	GPIO_Input	
+17	PA7	GPIO_Output	
+18	PB0	GPIO_Output	
+19	PB1	GPIO_Output	
+20	PB2	GPIO_Output	
+29	PA8	GPIO_Output	
+30	PA9	GPIO_Output	
+31	PA10	GPIO_Output	
+32	PA11	GPIO_Output	
+39	PB3	GPIO_Output	
+42	PB6	USART1_TX	
+43	PB7	USART1_RX	
+
+
+
+SOFTWARE PROJECT
+
+Project Settings : 
+Project Name : STM32F4
+Project Folder : D:\Documents\Projects\ScientificCalculator\STM32F4
+Toolchain / IDE : STM32CubeIDE
+Firmware Package Name and Version : STM32Cube FW_F4 V1.27.1
+
+
+Code Generation Settings : 
+STM32Cube MCU packages and embedded software packs : Copy only the necessary library files
+Generate peripheral initialization as a pair of '.c/.h' files per peripheral : No
+Backup previously generated files when re-generating : No
+Delete previously generated files when not re-generated : Yes
+Set all free pins as analog (to optimize the power consumption) : No
+
+
+Toolchains Settings : 
+Compiler Optimizations : 
+
+
+
+
+
