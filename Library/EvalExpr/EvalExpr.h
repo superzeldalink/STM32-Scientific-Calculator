@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
+#include <float.h>
 
 #define MAX 100 // maximum size of stack
 #define TOLERANCE 1e-9
@@ -21,6 +22,7 @@ struct stack {
 
 // evaluate a math expression from string
 double evaluate(char *exp, uint8_t size, uint8_t* errorCode);
+double limit(char *exp, double x0, char size, uint8_t *error);
 double derivative(char *exp, double x, char size, uint8_t *error);
 
 typedef struct {

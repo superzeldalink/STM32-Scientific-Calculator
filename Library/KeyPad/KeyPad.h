@@ -70,11 +70,14 @@ typedef enum
   RIGHT = 53,
   AC = 54,
   EQUAL_SIGN = 55,
-  DERIVATIVE = 56,
+  LIMIT = 56,
+  DERIVATIVE = 57,
 
   X = 97,
   Y = 98,
-  Z = 99
+  Z = 99,
+  PINFTY = 100,
+  NINFTY = 101,
 } Key;
 
 void      KeyPad_Init(void);

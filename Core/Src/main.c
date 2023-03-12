@@ -66,6 +66,10 @@ void PrintChar(uint8_t ch){
 		char c[] = {'d','(',0};
 		GLCD_Font_Print(disX, disY, (char*) &c);
 		disX+=2;
+	} else if(ch == LIMIT) {
+		char c[] = {'l','(',0};
+		GLCD_Font_Print(disX, disY, (char*) &c);
+		disX+=2;
 	} else if (ch == SINE || ch == COSINE || ch == TANGENT || ch == ANSWER || ch == LOG) {
 		char c[] = {0,0,0,0};
 		switch(ch) {
@@ -101,6 +105,8 @@ void PrintChar(uint8_t ch){
 			case Y: c[0] = 131; break;
 			case Z: c[0] = 132; break;
 			case EQUAL_SIGN: c[0] = '='; break;
+			case PINFTY: c[0] = 133; break;
+			case NINFTY: c[0] = 134; break;
 		}
 		GLCD_Font_Print(disX, disY, (char*) &c);
 		disX++;
@@ -116,7 +122,7 @@ void BackspaceChar(int numChar){
 
 void AddKey(uint8_t key){
 	input[input_ptr++] = key;
-	if(key == LOGX || key == DERIVATIVE)
+	if(key == LOGX || key == DERIVATIVE || key == LIMIT)
 		input[input_ptr++] = BRACKET_OPEN;
 
 	PrintChar(key);
@@ -130,7 +136,11 @@ void BackSpace() {
 	  BackspaceChar(3);
   else if (prevKey == LN)
 	  BackspaceChar(2);
-  else if (prevKey == BRACKET_OPEN && input[input_ptr - 1] == LOGX) {
+  else if (prevKey == LIMIT || prevKey == DERIVATIVE) {
+	  BackspaceChar(2);
+	  input_ptr--;
+	  input[input_ptr] = 0;
+  } else if (prevKey == BRACKET_OPEN && input[input_ptr - 1] == LOGX) {
 	  BackspaceChar(4);
 	  input_ptr--;
 	  input[input_ptr] = 0;
@@ -230,6 +240,13 @@ int main(void)
 			  case X: AddKey(Y); break;
 			  case Y: AddKey(Z); break;
 			  case Z: AddKey(X); break;
+
+			  case LIMIT: AddKey(DERIVATIVE); break;
+			  case DERIVATIVE: AddKey(LIMIT); break;
+
+			  case ZERO: AddKey(PINFTY); break;
+			  case PINFTY: AddKey(NINFTY); break;
+			  case NINFTY: AddKey(ZERO); break;
 			  default: AddKey(prevKey); break;
 			  }
 			  break;

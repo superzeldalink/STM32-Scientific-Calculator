@@ -174,7 +174,6 @@ double itod(const char *digits, char* max_addr, int* endi) {
     return 0.0f;
 }
 
-
 // evaluate a math expression from array
 double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
     // create two stacks: one for operands and one for operators
@@ -187,7 +186,8 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
 
     // loop through each character in the expression
     for(int i = 0; i < size; i++) {
-    	if (exp[i] == DERIVATIVE) {
+    	if (exp[i] == DERIVATIVE || exp[i] == LIMIT) {
+            char mode = exp[i];
     		// Find the comma
     		int j, arg0Size, arg1Size;
     		for(j = i + 2; j < size; j++) {
@@ -206,11 +206,15 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
 
     		double x0 = ExpEvaluate(exp + arg0Size + 3, arg1Size, errorCode);
 
-			double der = derivative(exp + i + 2, x0, arg0Size, errorCode);
+            double result;
+            if (mode == DERIVATIVE)
+			    result = derivative(exp + i + 2, x0, arg0Size, errorCode);
+            else if (mode == LIMIT)
+			    result = limit(exp + i + 2, x0, arg0Size, errorCode);
 
 			i += arg0Size + arg1Size + 3;
 
-            push(&operands, der, errorCode);
+            push(&operands, result, errorCode);
     	}
         // if the character is a digit or a decimal point or a negative sign,
         // read the whole number and push it into operands stack
@@ -227,6 +231,10 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
             // check if not the last digit, append *
             if (i < size - 1  && (exp[i+1] > BRACKET_CLOSE || exp[i+1] == ANSWER) && exp[i+1] != COMMA)
                 push(&operators, MULTIPLY, errorCode);
+		} else if (exp[i] == PINFTY) {
+            push(&operands, DBL_MAX, errorCode);
+		} else if (exp[i] == NINFTY) {
+            push(&operands, -DBL_MAX, errorCode);
 		} else if (is_variable(exp[i])) {
             push(&operands, GetVar(exp[i]), errorCode);
             if (i < size - 1  && (exp[i+1] > BRACKET_CLOSE || exp[i+1] == ANSWER) && exp[i+1] != COMMA)
@@ -339,6 +347,26 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
     if (*errorCode == 0)
     	SetVar(ANSWER, answer);
     return answer;
+}
+
+// FIND LIMIT
+double limit(char *exp, double x0, char size, uint8_t *error) {
+    double h = TOLERANCE; // small number for approximating limit
+    double t = GetVar(X);
+    SetVar(X, x0 + h);
+    double left = ExpEvaluate(exp, size, error);
+    SetVar(X, x0 - h);
+    double right = ExpEvaluate(exp, size, error);
+
+    SetVar(X, t);
+
+    if (isnan(left) || isnan(right)) { // handle cases where limit is undefined
+        return NAN;
+    } else if ((isinf(left) && isinf(right)) || (fabs(left - right) < sqrt(TOLERANCE))) {
+        return (left+right)/2;
+    } else { // handle cases where limit exists but is different from both sides
+        return NAN;
+    }
 }
 
 // FIND DERIVATIVE
