@@ -18,10 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <string.h>
 #include "../../Library/KeyPad/KeyPad.h"
 #include "../../Library/KeyPad/KeyPad.c"
 #include "../../Library/ST7920_SERIAL/ST7920_SERIAL.h"
@@ -50,7 +50,6 @@ uint8_t disX = 0, disY = 0;
 void ClearRow(int row){
 	GLCD_Font_Print(0, row, "                ");
 }
-
 
 void PrintChar(uint8_t ch){
 	if(ch < 10) {
@@ -82,7 +81,7 @@ void PrintChar(uint8_t ch){
 		GLCD_Font_Print(disX, disY, (char*) &c);
 		disX+=3;
 	} else if(ch == LOGX) {
-		char c[] = {'l','o','g','(','0'};
+		char c[] = {'l','o','g','(',0};
 		GLCD_Font_Print(disX, disY, (char*) &c);
 		disX+=4;
 	} else {
@@ -136,12 +135,12 @@ void BackSpace() {
 	  BackspaceChar(3);
   else if (prevKey == LN)
 	  BackspaceChar(2);
-  else if (prevKey == LIMIT || prevKey == DERIVATIVE) {
-	  BackspaceChar(2);
-	  input_ptr--;
-	  input[input_ptr] = 0;
-  } else if (prevKey == BRACKET_OPEN && input[input_ptr - 1] == LOGX) {
-	  BackspaceChar(4);
+  else if (prevKey == BRACKET_OPEN) {
+	  BackspaceChar(1);
+	  if (input[input_ptr - 1] == LOGX)
+		  BackspaceChar(3);
+	  else if (input[input_ptr - 1] == LIMIT || input[input_ptr - 1] == DERIVATIVE)
+		  BackspaceChar(1);
 	  input_ptr--;
 	  input[input_ptr] = 0;
   } else
@@ -291,12 +290,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 72;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -306,12 +300,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
     Error_Handler();
   }
@@ -336,7 +330,7 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 72-1;
+  htim1.Init.Prescaler = 16-1;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim1.Init.Period = 0xffff-1;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;

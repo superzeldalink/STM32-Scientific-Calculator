@@ -174,6 +174,18 @@ double itod(const char *digits, char* max_addr, int* endi) {
     return 0.0f;
 }
 
+void calculate(struct stack *operators, struct stack *operands, uint8_t* errorCode) {
+    // pop two operands and one operator
+    char op = pop(operators, errorCode);
+    double y = 0;
+    if ((op < SINE && op != FACTORIAL && op != SQRT) || op == LOGX)
+        y = pop(operands, errorCode);
+    double x = pop(operands, errorCode);
+
+    // evaluate the expression x op y and push the result into operands stack
+    push(operands, operate(x, y, op, errorCode), errorCode);
+}
+
 // evaluate a math expression from array
 double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
     // create two stacks: one for operands and one for operators
@@ -183,6 +195,25 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
     // track the number of opening and closing parentheses
     int numOpenBrackets = 0;
     int numCloseBrackets = 0;
+
+    // Find if there is an EQUAL_SIGN
+    for(int i = 0; i < size; i++) {
+        if(exp[i] == EQUAL_SIGN) {
+            double result;
+            if (i == 1 && is_variable(exp[i - 1])) {
+                result = ExpEvaluate(exp + 2, size - 2, errorCode);
+                if (*errorCode == 0)
+                    SetVar(exp[i-1], result);
+            } else if (i == size - 2 && is_variable(exp[i + 1])) {
+                result = ExpEvaluate(exp, size - 2, errorCode);
+                if (*errorCode == 0)
+                    SetVar(exp[i+1], result);
+            } else {
+                *errorCode = 1;
+            }
+            return result;
+        }
+    }
 
     // loop through each character in the expression
     for(int i = 0; i < size; i++) {
@@ -251,16 +282,7 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
         // pop and evaluate all operators until an opening parenthesis is found
         else if (exp[i] == BRACKET_CLOSE) {
             while (operators.top != -1 && operators.items[operators.top] != BRACKET_OPEN) {
-
-                // pop two operands and one operator
-                char op = pop(&operators, errorCode);
-                double y = 0;
-                if ((op < SINE && op != FACTORIAL) || op == LOGX)
-                    y = pop(&operands, errorCode);
-                double x = pop(&operands, errorCode);
-
-                // evaluate the expression x op y and push the result into operands stack
-                push(&operands, operate(x, y, op, errorCode), errorCode);
+            	calculate(&operators, &operands, errorCode);
             }
 
             // pop and discard the opening parenthesis
@@ -276,16 +298,7 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
         // if the character is a comma,
         else if (exp[i] == COMMA) {
 			while (operators.top != -1 && operators.items[operators.top] != BRACKET_OPEN) {
-
-				// pop two operands and one operator
-				char op = pop(&operators, errorCode);
-				double y = 0;
-				if ((op < SINE && op != FACTORIAL) || op == LOGX)
-					y = pop(&operands, errorCode);
-				double x = pop(&operands, errorCode);
-
-				// evaluate the expression x op y and push the result into operands stack
-				push(&operands, operate(x, y, op, errorCode), errorCode);
+            	calculate(&operators, &operands, errorCode);
 			}
 		}
 
@@ -298,16 +311,7 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
                 return 0;
             }
             while (operators.top != -1 && precedence(operators.items[operators.top]) >= precedence(exp[i])) {
-
-                // pop two operands and one operator
-                char op = pop(&operators, errorCode);
-                double y = 0;
-                if ((op < SINE && op != FACTORIAL) || op == LOGX)
-                    y = pop(&operands, errorCode);
-                double x = pop(&operands, errorCode);
-
-                // evaluate the expression x op y and push the result into operands stack
-                push(&operands, operate(x, y, op, errorCode), errorCode);
+            	calculate(&operators, &operands, errorCode);
             }
 
             // push the current operator into operators stack
@@ -327,16 +331,7 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
 
     // pop and evaluate all remaining operators
     while (operators.top != -1) {
-
-        // pop two operands and one operator
-        char op = pop(&operators, errorCode);
-        double y = 0;
-        if ((op < SINE && op != FACTORIAL) || op == LOGX)
-            y = pop(&operands, errorCode);
-        double x = pop(&operands, errorCode);
-
-        // evaluate the expression x op y and push the result into operands stack
-        push(&operands, operate(x, y, op, errorCode), errorCode);
+    	calculate(&operators, &operands, errorCode);
     }
 
     // the final result is the only value left in operands stack
@@ -405,12 +400,12 @@ double derivative(char *exp, double x, char size, uint8_t *error) {
 
 
 double evaluate(char *exp, uint8_t size, uint8_t* errorCode) {
-	if(is_variable(exp[0]) && exp[1] == EQUAL_SIGN) {
-		double ans = ExpEvaluate(exp + 2, size - 2, errorCode);
-		if(*errorCode == 0)
-			SetVar(exp[0], ans);
-		return ans;
-	}
+//	if(is_variable(exp[0]) && exp[1] == EQUAL_SIGN) {
+//		double ans = ExpEvaluate(exp + 2, size - 2, errorCode);
+//		if(*errorCode == 0)
+//			SetVar(exp[0], ans);
+//		return ans;
+//	}
 	return ExpEvaluate(exp, size, errorCode);
 }
 
@@ -427,7 +422,7 @@ Fraction to_fraction(double x) {
         x = -x; // use absolute value for fraction conversion
     }
     long long int a = 0, b = 1, c = 1, d = 0;
-    double eps = TOLERANCE;
+    double eps = 10e-12;
     while (1) {
         long long int p = a + c;
         long long int q = b + d;
