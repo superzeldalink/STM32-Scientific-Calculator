@@ -189,29 +189,21 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
     for(int i = 0; i < size; i++) {
     	if (exp[i] == DERIVATIVE) {
     		// Find the comma
-    		int j;
+    		int j, arg0Size, arg1Size;
     		for(j = i + 2; j < size; j++) {
     			if (exp[j] == BRACKET_OPEN)
 					numOpenBrackets++;
     			else if (exp[j] == BRACKET_CLOSE)
 					numCloseBrackets++;
 
-    			if(exp[j] == COMMA && numOpenBrackets == numCloseBrackets)
-    				break;
-    		}
-    		int arg0Size = j - i - 2;
-    		// Find the close parenthesis
-    		for(j = j + 1; j < size; j++) {
-    			if (exp[j] == BRACKET_OPEN)
-					numOpenBrackets++;
-    			else if (exp[j] == BRACKET_CLOSE)
-					numCloseBrackets++;
-
-    			if(exp[j+1] == BRACKET_CLOSE && numOpenBrackets == numCloseBrackets){
+    			if(exp[j] == COMMA && numOpenBrackets == numCloseBrackets){
+    				arg0Size = j - i - 2;
+    			} else if(exp[j+1] == BRACKET_CLOSE && numOpenBrackets == numCloseBrackets){
+    				arg1Size = j - i - 2 - arg0Size;
     				break;
     			}
     		}
-    		int arg1Size = j - i - 2 - arg0Size;
+
     		double x0 = ExpEvaluate(exp + arg0Size + 3, arg1Size, errorCode);
 
 			double der = derivative(exp + i + 2, x0, arg0Size, errorCode);
@@ -350,6 +342,7 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
 }
 
 // FIND DERIVATIVE
+// Using central difference formula
 double derivative(char *exp, double x, char size, uint8_t *error) {
     double h = 1e-4;  // initial step size
     double t = GetVar(X);
@@ -377,7 +370,6 @@ double derivative(char *exp, double x, char size, uint8_t *error) {
         }
     }
 
-
     SetVar(X, t);
     return result;
 }
@@ -394,7 +386,8 @@ double evaluate(char *exp, uint8_t size, uint8_t* errorCode) {
 	return ExpEvaluate(exp, size, errorCode);
 }
 
-
+// CONVERT DOUBLE TO FRACTION
+// Using continued fraction expansion algorithm
 Fraction to_fraction(double x) {
     Fraction frac = {1, 0, 0}; // initialize to positive fraction
     if (x == 0) {

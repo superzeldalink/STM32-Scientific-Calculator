@@ -8,7 +8,7 @@
 
 #define MAX 100 // maximum size of stack
 #define TOLERANCE 1e-9
-#define E 2.7182818284590452353602874713527
+#define E M_E
 
 double answer = 0;
 double varSto[4];

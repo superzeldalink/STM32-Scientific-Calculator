@@ -97,16 +97,14 @@ void PrintChar(uint8_t ch){
 			case FACTORIAL: c[0] = '!'; break;
 			case SQRT: c[0] = 128; break;
 			case XRT: c[0] = 129; break;
-			case X: c[0] = 'x'; break;
-			case Y: c[0] = 'y'; break;
-			case Z: c[0] = 'z'; break;
+			case X: c[0] = 130; break;
+			case Y: c[0] = 131; break;
+			case Z: c[0] = 132; break;
 			case EQUAL_SIGN: c[0] = '='; break;
 		}
 		GLCD_Font_Print(disX, disY, (char*) &c);
 		disX++;
 	}
-
-	ST7920_Update();
 }
 
 void BackspaceChar(int numChar){
@@ -114,7 +112,6 @@ void BackspaceChar(int numChar){
 		disX--;
 		GLCD_Font_Print(disX, disY, " ");
 	}
-	ST7920_Update();
 }
 
 void AddKey(uint8_t key){
@@ -168,8 +165,6 @@ void PrintAnswer() {
 	} else {
 	  PrintError(errorCode);
 	}
-
-	ST7920_Update();
 }
 
 /**
@@ -246,7 +241,6 @@ int main(void)
 			  char answerText[256] = "";
 			  sprintf(answerText, "%ld/%ld", frac.num * frac.sign, frac.den);
 		      GLCD_Font_Print(16 - strlen(answerText), ANSWER_ROW, (char*) &answerText);
-		      ST7920_Update();
 			  break;
 		  }
 
@@ -254,6 +248,8 @@ int main(void)
 			  AddKey(key);
 			  break;
 		  }
+
+	      ST7920_Update();
 	  }
   }
 }
