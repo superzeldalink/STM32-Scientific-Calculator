@@ -199,19 +199,32 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
     // Find if there is an EQUAL_SIGN
     for(int i = 0; i < size; i++) {
         if(exp[i] == EQUAL_SIGN) {
-            double result;
-            if (i == 1 && is_variable(exp[i - 1])) {
-                result = ExpEvaluate(exp + 2, size - 2, errorCode);
-                if (*errorCode == 0)
-                    SetVar(exp[i-1], result);
-            } else if (i == size - 2 && is_variable(exp[i + 1])) {
-                result = ExpEvaluate(exp, size - 2, errorCode);
-                if (*errorCode == 0)
-                    SetVar(exp[i+1], result);
-            } else {
+            if(i == 0 || i == size - 1) {
                 *errorCode = 1;
+                return 0;
             }
-            return result;
+            double result;
+            if(exp[i+1] == EQUAL_SIGN) {
+                char _exp[size + 1];
+                for (int j = 0; j < size; j++)
+                    _exp[j] = exp[j];
+                _exp[i] = MINUS;
+                _exp[i+1] = BRACKET_OPEN;
+                _exp[size] = BRACKET_CLOSE;
+                result = ExpSolve(_exp, size + 1, errorCode);
+                return result;
+            } else {
+                if (i == 1 && is_variable(exp[i - 1])) {
+                    result = ExpEvaluate(exp + 2, size - 2, errorCode);
+                    if (*errorCode == 0)
+                        SetVar(exp[i-1], result);
+                } else if (i == size - 2 && is_variable(exp[i + 1])) {
+                    result = ExpEvaluate(exp, size - 2, errorCode);
+                    if (*errorCode == 0)
+                        SetVar(exp[i+1], result);
+                }
+                return result;
+            }
         }
     }
 
@@ -249,7 +262,9 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
     	}
         // if the character is a digit or a decimal point or a negative sign,
         // read the whole number and push it into operands stack
-    	else if (exp[i] <= DOT || (exp[i] == MINUS && (i == 0 || exp[i -1] > NINE))) {
+    	else if (exp[i] <= DOT || (exp[i] == MINUS && exp[i+1] <= DOT &&
+    			(i == 0 || exp[i-1] == BRACKET_OPEN || is_operator(exp[i-1]))
+    	)) {
 
             int endi;
             double value = itod(&exp[i], exp + size, &endi);
@@ -266,7 +281,13 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
             push(&operands, DBL_MAX, errorCode);
 		} else if (exp[i] == NINFTY) {
             push(&operands, -DBL_MAX, errorCode);
-		} else if (is_variable(exp[i])) {
+		}  else if (exp[i] == MINUS && is_variable(exp[i+1]) &&
+    			(i == 0 || exp[i-1] == BRACKET_OPEN || is_operator(exp[i-1]))) {
+            i++;
+    		push(&operands, -GetVar(exp[i]), errorCode);
+            if (i < size - 1  && (exp[i+1] > BRACKET_CLOSE || exp[i+1] == ANSWER) && exp[i+1] != COMMA)
+                push(&operators, MULTIPLY, errorCode);
+		 } else if (is_variable(exp[i])) {
             push(&operands, GetVar(exp[i]), errorCode);
             if (i < size - 1  && (exp[i+1] > BRACKET_CLOSE || exp[i+1] == ANSWER) && exp[i+1] != COMMA)
                 push(&operators, MULTIPLY, errorCode);
@@ -397,7 +418,36 @@ double derivative(char *exp, double x, char size, uint8_t *error) {
     return result;
 }
 
+// SOLVE
+double ExpSolve(char *exp, char size, uint8_t *error) {
+    double x = GetVar(X);
+    double t = GetVar(X);
+    double fx, dfx;
+    double h = 1;
 
+    int iterations = 0;
+    while (fabs(h) >= TOLERANCE || isnan(h)) {
+        iterations++;
+        fx = ExpEvaluate(exp, size, error);
+        dfx = derivative(exp, x, size, error);
+        h = fx/dfx;
+        if(isnan(h))
+            x += 10*x + TOLERANCE;
+        else
+            x = x - h;
+        SetVar(X, x);
+
+        if(iterations == 100) {
+            x = t - TOLERANCE;
+            SetVar(X, t);
+        } else if (iterations > 200){
+            x = NAN;
+            break;
+        }
+    }
+    SetVar(X, t);
+    return x;
+}
 
 double evaluate(char *exp, uint8_t size, uint8_t* errorCode) {
 //	if(is_variable(exp[0]) && exp[1] == EQUAL_SIGN) {

@@ -9,9 +9,10 @@
   - [ ] $\sinh x$, $\cosh x$, $\tanh x$ 
   - [x] $\ln x$, $\log_{10}x$, $\log_a x$
   - [x] Factorial $!$
-- [ ] Limits
+- [x] Limits
 - [x] Differentiation
 - [ ] Integration
+- [x] Solve equation
 - [x] CALC and STO (3 variables for now)
 - [x] Convert decimal places into fractions
 - [x] Accuracy upto 10 decimal places

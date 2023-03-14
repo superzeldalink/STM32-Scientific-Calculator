@@ -135,12 +135,11 @@ void BackSpace() {
 	  BackspaceChar(3);
   else if (prevKey == LN)
 	  BackspaceChar(2);
-  else if (prevKey == BRACKET_OPEN) {
-	  BackspaceChar(1);
+  else if (prevKey == BRACKET_OPEN && (input[input_ptr - 1] == LOGX || input[input_ptr - 1] == LIMIT || input[input_ptr - 1] == DERIVATIVE)) {
 	  if (input[input_ptr - 1] == LOGX)
-		  BackspaceChar(3);
-	  else if (input[input_ptr - 1] == LIMIT || input[input_ptr - 1] == DERIVATIVE)
-		  BackspaceChar(1);
+		  BackspaceChar(4);
+	  else
+		  BackspaceChar(2);
 	  input_ptr--;
 	  input[input_ptr] = 0;
   } else
@@ -219,6 +218,7 @@ int main(void)
 
 		  case DOWN: {
 			  uint8_t prevKey = input[input_ptr - 1];
+			  uint8_t prevPrevKey = input[input_ptr - 2];
 			  BackSpace();
 
 			  switch(prevKey){
@@ -229,9 +229,9 @@ int main(void)
 			  case SINE: AddKey(COSINE); break;
 			  case COSINE: AddKey(TANGENT); break;
 			  case TANGENT: AddKey(SINE); break;
+
 			  case LN: AddKey(LOG); break;
 			  case LOG: AddKey(LOGX); break;
-			  case LOGX: AddKey(LN); break;
 
 			  case DOT: AddKey(COMMA); break;
 			  case COMMA: AddKey(DOT); break;
@@ -240,12 +240,18 @@ int main(void)
 			  case Y: AddKey(Z); break;
 			  case Z: AddKey(X); break;
 
-			  case LIMIT: AddKey(DERIVATIVE); break;
-			  case DERIVATIVE: AddKey(LIMIT); break;
-
 			  case ZERO: AddKey(PINFTY); break;
 			  case PINFTY: AddKey(NINFTY); break;
 			  case NINFTY: AddKey(ZERO); break;
+
+			  case BRACKET_OPEN:
+				  switch(prevPrevKey) {
+				  case LIMIT: AddKey(DERIVATIVE); break;
+				  case DERIVATIVE: AddKey(LIMIT); break;
+				  case LOGX: AddKey(LN); break;
+				  default: AddKey(prevKey); break;
+				  }
+				  break;
 			  default: AddKey(prevKey); break;
 			  }
 			  break;
