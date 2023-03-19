@@ -73,11 +73,12 @@ int precedence(char op) {
             return 1;
         case MULTIPLY:
         case DIVIDE:
+            return 2;
         case EXPONENT:
         case XRT:
-            return 2;
+            return 3;
         case FACTORIAL:
-        	return 3;
+        	return 4;
         case SQRT:
         case SINE:
         case COSINE:
@@ -85,7 +86,7 @@ int precedence(char op) {
         case LN:
         case LOG:
         case LOGX:
-            return 4;
+            return 5;
         default:
             return 0;
     }
@@ -426,7 +427,7 @@ double ExpSolve(char *exp, char size, uint8_t *error) {
     double h = 1;
 
     int iterations = 0;
-    while (fabs(h) >= TOLERANCE || isnan(h)) {
+    while (fabs(h) >= TOLERANCE) {
         iterations++;
         fx = ExpEvaluate(exp, size, error);
         dfx = derivative(exp, x, size, error);
@@ -437,10 +438,10 @@ double ExpSolve(char *exp, char size, uint8_t *error) {
             x = x - h;
         SetVar(X, x);
 
-        if(iterations == 100) {
+        if(iterations == 500) {
             x = t - TOLERANCE;
             SetVar(X, t);
-        } else if (iterations > 200){
+        } else if (iterations > 1000){
             x = NAN;
             break;
         }
