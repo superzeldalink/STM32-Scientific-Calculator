@@ -1,6 +1,18 @@
 #ifndef __ST7920_SERIAL_H
 #define __ST7920_SERIAL_H
 
+#define GLCD_SID_Pin 		LCD_R_Pin
+#define GLCD_SID_GPIO_Port 	LCD_R_GPIO_Port
+
+#define GLCD_SCK_Pin 		LCD_E_Pin
+#define GLCD_SCK_GPIO_Port 	LCD_E_GPIO_Port
+
+#define GLCD_RST_Pin 		LCD_RST_Pin
+#define GLCD_RST_GPIO_Port 	LCD_RST_GPIO_Port
+
+#define GLCD_CS_Pin 		LCD_RS_Pin
+#define GLCD_CS_GPIO_Port 	LCD_RS_GPIO_Port
+
 #include "stdint.h"
 
 // A replacement for SPI_TRANSMIT

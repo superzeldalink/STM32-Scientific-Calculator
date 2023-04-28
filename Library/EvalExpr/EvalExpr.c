@@ -427,7 +427,7 @@ double ExpSolve(char *exp, char size, uint8_t *error) {
     double h = 1;
 
     int iterations = 0;
-    while (fabs(h) >= TOLERANCE) {
+    while (fabs(h) >= TOLERANCE || isnan(h)) {
         iterations++;
         fx = ExpEvaluate(exp, size, error);
         dfx = derivative(exp, x, size, error);
@@ -446,7 +446,6 @@ double ExpSolve(char *exp, char size, uint8_t *error) {
             break;
         }
     }
-    SetVar(X, t);
     return x;
 }
 

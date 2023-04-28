@@ -59,18 +59,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 
 /* USER CODE BEGIN Private defines */
-#define GLCD_SID_Pin 		GPIO_PIN_1
-#define GLCD_SID_GPIO_Port 	GPIOB
-
-#define GLCD_SCK_Pin 		GPIO_PIN_0
-#define GLCD_SCK_GPIO_Port 	GPIOB
-
-#define GLCD_RST_Pin 		GPIO_PIN_3
-#define GLCD_RST_GPIO_Port 	GPIOB
-
-#define GLCD_CS_Pin 		GPIO_PIN_2
-#define GLCD_CS_GPIO_Port 	GPIOB
-
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
