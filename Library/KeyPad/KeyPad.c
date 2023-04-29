@@ -1,11 +1,12 @@
 #include "KeyPad.h"
 #include "KeyPadConfig.h"
 #include "stm32f4xx_ll_gpio.h"
+#include "delay.h"
 #if (_KEYPAD_USE_FREERTOS==1)
 #include "cmsis_os.h"
 #define _KEYPAD_DELAY(x)      osDelay(x)
 #else
-#define _KEYPAD_DELAY(x)      HAL_Delay(x)
+#define _KEYPAD_DELAY(x)      delay_us(x)
 #endif
 
 KeyPad_t	KeyPad;
@@ -48,7 +49,7 @@ uint16_t	KeyPad_Scan(void)
     {
       if(HAL_GPIO_ReadPin((GPIO_TypeDef*)_KEYPAD_ROW_GPIO_PORT[r], _KEYPAD_ROW_GPIO_PIN[r]) == GPIO_PIN_RESET)
       {
-        _KEYPAD_DELAY(_KEYPAD_DEBOUNCE_TIME_MS);
+        _KEYPAD_DELAY(_KEYPAD_DEBOUNCE_TIME_US);
         if(HAL_GPIO_ReadPin((GPIO_TypeDef*)_KEYPAD_ROW_GPIO_PORT[r], _KEYPAD_ROW_GPIO_PIN[r]) == GPIO_PIN_RESET)
         {
           key |= r;
@@ -74,7 +75,7 @@ uint16_t	KeyPad_WaitForKey(uint32_t  Timeout_ms)
 			KeyPad.LastKey = keyRead;
 			return keyRead;	
 		}
-		_KEYPAD_DELAY(_KEYPAD_DEBOUNCE_TIME_MS);	
+		_KEYPAD_DELAY(_KEYPAD_DEBOUNCE_TIME_US);
 	}
 	uint32_t	StartTime = HAL_GetTick();
 	while(HAL_GetTick()-StartTime < Timeout_ms)
@@ -85,7 +86,7 @@ uint16_t	KeyPad_WaitForKey(uint32_t  Timeout_ms)
 			KeyPad.LastKey = keyRead;
 			return keyRead;	
 		}
-		_KEYPAD_DELAY(_KEYPAD_DEBOUNCE_TIME_MS);	
+		_KEYPAD_DELAY(_KEYPAD_DEBOUNCE_TIME_US);
 	}
 	KeyPad.LastKey = 0xFFFF;
 	return 0xFFFF;

@@ -1,7 +1,7 @@
 #ifndef	_KEYPADCONFIG_H
 #define	_KEYPADCONFIG_H
 
-#define           _KEYPAD_DEBOUNCE_TIME_MS        20
+#define           _KEYPAD_DEBOUNCE_TIME_US        2
 #define           _KEYPAD_USE_FREERTOS            0
 
 const GPIO_TypeDef* _KEYPAD_COLUMN_GPIO_PORT[] =
