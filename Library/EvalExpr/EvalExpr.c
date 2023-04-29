@@ -421,20 +421,22 @@ double derivative(char *exp, double x, char size, uint8_t *error) {
 
 // SOLVE
 double ExpSolve(char *exp, char size, uint8_t *error) {
+    double xo = GetVar(X);
     double x = GetVar(X);
     double t = GetVar(X);
     double fx, dfx;
     double h = 1;
 
     int iterations = 0;
-    while (fabs(h) >= TOLERANCE || isnan(h)) {
+    while (fabs(h) >= TOLERANCE  || isnan(h)) {
         iterations++;
         fx = ExpEvaluate(exp, size, error);
         dfx = derivative(exp, x, size, error);
         h = fx/dfx;
-        if(isnan(h))
-            x += 10*x + TOLERANCE;
-        else
+        if(isnan(h)) {
+            xo += 10*xo + TOLERANCE;
+            x = xo;
+        } else
             x = x - h;
         SetVar(X, x);
 
