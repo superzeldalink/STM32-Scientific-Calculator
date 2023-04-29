@@ -213,6 +213,7 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
                 _exp[i+1] = BRACKET_OPEN;
                 _exp[size] = BRACKET_CLOSE;
                 result = ExpSolve(_exp, size + 1, errorCode);
+                SetVar(ANSWER, result);
                 return result;
             } else {
                 if (i == 1 && is_variable(exp[i - 1])) {
