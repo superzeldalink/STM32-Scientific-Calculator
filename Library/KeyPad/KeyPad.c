@@ -151,23 +151,24 @@ uint8_t KeyPad_WaitForKeyGetChar(uint32_t Timeout_ms)
 	case 0x0404:
 		return S2D;
 
-	case 0x0500:
-		return EQUAL_SIGN;
-	case 0x0501:
-		return LEFT;
-	case 0x0502:
-		return DOWN;
 	case 0x0503:
-		return RIGHT;
+		return LIMIT;
 	case 0x0504:
 		return LN;
 
+	case 0x0600:
+		return EQUAL_SIGN;
+	case 0x0601:
+		return LEFT;
 	case 0x0602:
-		return UP;
+		return DOWN;
 	case 0x0603:
-		return LIMIT;
+		return RIGHT;
 	case 0x0604:
 		return X;
+
+	case 0x0702:
+		return UP;
 
 	default:
 		return 0xFF;
