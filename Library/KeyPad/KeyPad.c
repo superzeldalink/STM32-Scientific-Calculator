@@ -167,6 +167,8 @@ uint8_t KeyPad_WaitForKeyGetChar(uint32_t Timeout_ms)
 	case 0x0604:
 		return X;
 
+	case 0x0700:
+		return TEST;
 	case 0x0702:
 		return UP;
 

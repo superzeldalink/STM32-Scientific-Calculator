@@ -78,6 +78,8 @@ typedef enum
   Z = 99,
   PINFTY = 100,
   NINFTY = 101,
+
+  TEST = 254
 } Key;
 
 void      KeyPad_Init(void);

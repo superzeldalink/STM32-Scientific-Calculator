@@ -11,6 +11,7 @@
 #include "main.h"
 #include "ST7920_SERIAL.h"
 #include "font.h"
+#include "delay.h"
 
 #define SCLK_PIN GLCD_SCK_Pin
 #define SCLK_PORT GLCD_SCK_GPIO_Port
@@ -29,11 +30,11 @@ uint8_t Graphic_Check = 0;
 //GLCD Buf
 uint8_t GLCD_Buf[1024];
 
-void delay_us(uint32_t Time_us)
-{
-	//uint16_t i;
-	while(Time_us--);//for(i=0;i<0xf;i++);
-}
+//void delay_us(uint32_t Time_us)
+//{
+//	//uint16_t i;
+//	while(Time_us--);//for(i=0;i<0xf;i++);
+//}
 
 // A replacement for SPI_TRANSMIT
 
@@ -134,12 +135,12 @@ void ST7920_GraphicMode (int enable)   // 1-enable, 0-disable
 
 void ST7920_DrawBitmap(const unsigned char* graphic)
 {
-	
+
 	uint8_t x, y;
-	
+
 	uint16_t Index=0;
 	uint8_t Temp,Db;
-	
+
 	for(y=0;y<64;y++)
 	{
 		for(x=0;x<8;x++)
@@ -154,10 +155,10 @@ void ST7920_DrawBitmap(const unsigned char* graphic)
 				ST7920_SendCmd(0x80 | (y-32));//Y(0-31)
 				ST7920_SendCmd(0x88 | x);//X(0-8)
 			}
-			
+
 			Index=((y/8)*128)+(x*16);
-			Db=y%8;			
-			
+			Db=y%8;
+
 			Temp=	(((graphic[Index+0]>>Db)&0x01)<<7)|
 						(((graphic[Index+1]>>Db)&0x01)<<6)|
 						(((graphic[Index+2]>>Db)&0x01)<<5)|
@@ -167,7 +168,7 @@ void ST7920_DrawBitmap(const unsigned char* graphic)
 						(((graphic[Index+6]>>Db)&0x01)<<1)|
 						(((graphic[Index+7]>>Db)&0x01)<<0);
 			ST7920_SendData(Temp);
-			
+
 			Temp=	(((graphic[Index+8]>>Db)&0x01)<<7)|
 						(((graphic[Index+9]>>Db)&0x01)<<6)|
 						(((graphic[Index+10]>>Db)&0x01)<<5)|
@@ -176,10 +177,10 @@ void ST7920_DrawBitmap(const unsigned char* graphic)
 						(((graphic[Index+13]>>Db)&0x01)<<2)|
 						(((graphic[Index+14]>>Db)&0x01)<<1)|
 						(((graphic[Index+15]>>Db)&0x01)<<0);
-			
+
 			ST7920_SendData(Temp);
 		}
-	}		
+	}
 }
 
 //Clear GLCD Buf
@@ -230,6 +231,7 @@ void ST7920_Clear()
 
 void ST7920_Init (void)
 {
+	delay_init();
 	HAL_GPIO_WritePin(RST_PORT, RST_PIN, GPIO_PIN_RESET);  // RESET=0
 	HAL_Delay(10);   // wait for 10ms
 	HAL_GPIO_WritePin(RST_PORT, RST_PIN, GPIO_PIN_SET);  // RESET=1

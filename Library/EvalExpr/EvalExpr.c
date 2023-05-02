@@ -272,9 +272,9 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
             double value = itod(&exp[i], exp + size, &endi);
 
             if(exp[endi + 1] == DOT && exp[endi + 2] > NINE) { // after DOT must be a number
-    	        *errorCode = 1;
-    	        return 0;
-    	    }
+				*errorCode = 1;
+				return 0;
+			}
 
 			i += endi - 1;
 
