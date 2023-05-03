@@ -18,10 +18,18 @@ void Graph(char *exp, uint8_t size, uint8_t* errorCode) {
     for(int i = 0; i < 127; i++) {
 		SetVar(X, i*step - centerX);
 		double y1 = evaluate(exp, size, errorCode);
+		if(*errorCode == 4) {
+			y1 = NAN;
+			*errorCode = 0;
+		}
 
 		SetVar(X, (i+1)*step - centerX);
 		double y2 = evaluate(exp, size, errorCode);
 
+		if(*errorCode == 4) {
+			y2 = NAN;
+			*errorCode = 0;
+		}
 		if(*errorCode > 0)
 			return;
 
@@ -57,11 +65,11 @@ void GraphScreen(char *exp, uint8_t size, uint8_t* errorCode) {
 		    double step = (scale * 2 / 128) * 5;
 
 			switch (key) {
-			case RIGHT:
+			case LEFT:
 				centerX += step;
 				break;
 
-			case LEFT:
+			case RIGHT:
 				centerX -= step;
 				break;
 
