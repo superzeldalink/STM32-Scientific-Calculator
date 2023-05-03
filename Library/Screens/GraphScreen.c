@@ -52,45 +52,38 @@ void GraphScreen(char *exp, uint8_t size, uint8_t* errorCode) {
 
     ST7920_Update();
     while (1) {
-		uint8_t key = KeyPad_WaitForKeyGetChar(0);
+		uint8_t key = KeyPad_WaitForKeyGetChar(0, true);
 		if (key != 0xFF) {
 		    double step = (scale * 2 / 128) * 5;
 
 			switch (key) {
-			case LEFT:
-				centerX += step;
-				Graph(input, input_length, errorCode);
-				break;
-
 			case RIGHT:
-				centerX -= step;
-				Graph(input, input_length, errorCode);
+				centerX += step;
 				break;
 
-			case UP:
-				centerY += step;
-				Graph(input, input_length, errorCode);
+			case LEFT:
+				centerX -= step;
 				break;
 
 			case DOWN:
+				centerY += step;
+				break;
+
+			case UP:
 				centerY -= step;
-				Graph(input, input_length, errorCode);
 				break;
 
 			case PLUS:
 				scale -= 0.5;
-				Graph(input, input_length, errorCode);
 				break;
 
 			case MINUS:
 				scale += 0.5;
-				Graph(input, input_length, errorCode);
 				break;
 
 			case TEST:
 				scale = 1;
 				centerX = 1; centerY = 0.5;
-				Graph(input, input_length, errorCode);
 				break;
 
 			default:
@@ -98,6 +91,7 @@ void GraphScreen(char *exp, uint8_t size, uint8_t* errorCode) {
 				return;
 			}
 
+			Graph(input, input_length, errorCode);
 		    ST7920_Update();
 		}
 	}
