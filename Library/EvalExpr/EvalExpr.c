@@ -197,39 +197,6 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
     int numOpenBrackets = 0;
     int numCloseBrackets = 0;
 
-    // Find if there is an EQUAL_SIGN
-    for(int i = 0; i < size; i++) {
-        if(exp[i] == EQUAL_SIGN) {
-            if(i == 0 || i == size - 1) {
-                *errorCode = 1;
-                return 0;
-            }
-            double result;
-            if(exp[i+1] == EQUAL_SIGN) {
-                char _exp[size + 1];
-                for (int j = 0; j < size; j++)
-                    _exp[j] = exp[j];
-                _exp[i] = MINUS;
-                _exp[i+1] = BRACKET_OPEN;
-                _exp[size] = BRACKET_CLOSE;
-                result = ExpSolve(_exp, size + 1, errorCode);
-                SetVar(ANSWER, result);
-                return result;
-            } else {
-                if (i == 1 && is_variable(exp[i - 1])) {
-                    result = ExpEvaluate(exp + 2, size - 2, errorCode);
-                    if (*errorCode == 0)
-                        SetVar(exp[i-1], result);
-                } else if (i == size - 2 && is_variable(exp[i + 1])) {
-                    result = ExpEvaluate(exp, size - 2, errorCode);
-                    if (*errorCode == 0)
-                        SetVar(exp[i+1], result);
-                }
-                return result;
-            }
-        }
-    }
-
     // loop through each character in the expression
     for(int i = 0; i < size; i++) {
     	if (exp[i] == DERIVATIVE || exp[i] == LIMIT) {
@@ -459,12 +426,38 @@ double ExpSolve(char *exp, char size, uint8_t *error) {
 }
 
 double evaluate(char *exp, uint8_t size, uint8_t* errorCode) {
-//	if(is_variable(exp[0]) && exp[1] == EQUAL_SIGN) {
-//		double ans = ExpEvaluate(exp + 2, size - 2, errorCode);
-//		if(*errorCode == 0)
-//			SetVar(exp[0], ans);
-//		return ans;
-//	}
+    // Find if there is an EQUAL_SIGN
+    for(int i = 0; i < size; i++) {
+        if(exp[i] == EQUAL_SIGN) {
+            if(i == 0 || i == size - 1) {
+                *errorCode = 1;
+                return 0;
+            }
+            double result;
+            if(exp[i+1] == EQUAL_SIGN) {
+                char _exp[size + 1];
+                for (int j = 0; j < size; j++)
+                    _exp[j] = exp[j];
+                _exp[i] = MINUS;
+                _exp[i+1] = BRACKET_OPEN;
+                _exp[size] = BRACKET_CLOSE;
+                result = ExpSolve(_exp, size + 1, errorCode);
+                SetVar(ANSWER, result);
+                return result;
+            } else {
+                if (i == 1 && is_variable(exp[i - 1])) {
+                    result = ExpEvaluate(exp + 2, size - 2, errorCode);
+                    if (*errorCode == 0)
+                        SetVar(exp[i-1], result);
+                } else if (i == size - 2 && is_variable(exp[i + 1])) {
+                    result = ExpEvaluate(exp, size - 2, errorCode);
+                    if (*errorCode == 0)
+                        SetVar(exp[i+1], result);
+                }
+                return result;
+            }
+        }
+    }
 	return ExpEvaluate(exp, size, errorCode);
 }
 

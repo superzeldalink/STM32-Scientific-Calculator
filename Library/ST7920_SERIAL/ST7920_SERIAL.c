@@ -686,6 +686,13 @@ void ToggleRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 	}
 }
 
+//Toggle Row x=0-15 y=0-7
+void ToggleRow(uint8_t y)
+{
+	if(y == 0) ToggleRectangle(0, y, 128, 7);
+	else ToggleRectangle(0, y*8-1, 128, 8);
+}
+
 //Debug
 void GLCD_Test(void)
 {

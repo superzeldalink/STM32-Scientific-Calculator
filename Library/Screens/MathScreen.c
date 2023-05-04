@@ -1,15 +1,21 @@
-uint8_t input_length = 0;
-uint8_t input_ptr = 0;
-
 char disp_buff[256];
 uint8_t charLength[256];
-uint8_t disX = 0, disY = 0;
 
 bool cursorState = false;
 uint8_t cursor_ptr = 0;
 
 void ClearRow(int row) {
 	GLCD_Font_Print(0, row, "                ");
+}
+
+void ToggleCursor() {
+	cursorState = !cursorState;
+	ToggleRectangle(disX * 8, disY * 8, 1, 6);
+}
+void ToggleCursorOnOff(bool isOn) {
+	cursorState = isOn;
+	if(isOn)
+		ToggleRectangle(disX * 8, disY * 8, 1, 6);
 }
 
 char* GetChar(uint8_t ch) {
@@ -247,15 +253,11 @@ void PrintAnswer() {
 	}
 }
 
-void ToggleCursor() {
-	cursorState = !cursorState;
-	ToggleRectangle(disX * 8, disY * 8, 1, 6);
-}
-
 void MathScreen() {
+	UpdateDisp();
 	HAL_TIM_Base_Start_IT(&htim2);
 	while (1) {
-		uint8_t key = KeyPad_WaitForKeyGetChar(0);
+		uint8_t key = KeyPad_WaitForKeyGetChar(0, false);
 		if (key != 0xFF) {
 			HAL_TIM_Base_Stop_IT(&htim2);
 			if (cursorState)
@@ -269,8 +271,17 @@ void MathScreen() {
 				break;
 
 			case EQUAL: {
-				PrintAnswer();
-				input_ptr = input_length;
+				if(currentMode == 0) {
+					PrintAnswer();
+					input_ptr = input_length;
+				} else if (currentMode == 1) {
+					uint8_t errorCode = 0;
+					GraphScreen(input, input_length, &errorCode);
+
+					if (errorCode > 0) {
+						PrintError(errorCode);
+					}
+				}
 				break;
 			}
 
@@ -378,22 +389,19 @@ void MathScreen() {
 			}
 
 			case S2D: {
-				ClearRow(ANSWER_ROW);
-				Fraction frac = to_fraction(answer);
-				char answerText[256] = "";
-				sprintf(answerText, "%ld/%ld", frac.num * frac.sign, frac.den);
-				GLCD_Font_Print(16 - strlen(answerText), ANSWER_ROW,
-						(char*) &answerText);
+				if(currentMode == 0) {
+					ClearRow(ANSWER_ROW);
+					Fraction frac = to_fraction(answer);
+					char answerText[256] = "";
+					sprintf(answerText, "%ld/%ld", frac.num * frac.sign, frac.den);
+					GLCD_Font_Print(16 - strlen(answerText), ANSWER_ROW,
+							(char*) &answerText);
+				}
 				break;
 			}
 
-			case TEST: {
-				uint8_t errorCode = 0;
-				GraphScreen(input, input_length, &errorCode);
-
-				if (errorCode > 0) {
-					PrintError(errorCode);
-				}
+			case MODE: {
+				if(ChangeScreen()) return;
 				break;
 			}
 
@@ -402,8 +410,8 @@ void MathScreen() {
 				break;
 			}
 
-			HAL_TIM_Base_Start_IT(&htim2);
 			UpdateDisp();
+			HAL_TIM_Base_Start_IT(&htim2);
 		}
 	}
 }

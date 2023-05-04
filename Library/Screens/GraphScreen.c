@@ -1,5 +1,5 @@
-double scale = 1;
-double centerX = 1, centerY = 0.5;
+double scale = 2;
+double centerX = 2, centerY = 1;
 
 void Graph(char *exp, uint8_t size, uint8_t* errorCode) {
 	GLCD_Buf_Clear();

@@ -140,4 +140,6 @@ Debug/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.su
 Debug/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.d
 Debug/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.o
 Debug/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.su
-Library/EvalExpr/EvalExpr.c
+Debug/
+Debug/Core/Src/subdir.mk
+Debug/Drivers/STM32F4xx_HAL_Driver/Src/subdir.mk

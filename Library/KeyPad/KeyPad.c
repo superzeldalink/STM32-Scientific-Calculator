@@ -12,7 +12,7 @@
 KeyPad_t	KeyPad;
 
 //#############################################################################################
-void	KeyPad_Init(void)
+void	KeyPad_Init()
 {
   GPIO_InitTypeDef	gpio;
   KeyPad.ColumnSize = sizeof(_KEYPAD_COLUMN_GPIO_PIN) / 2;
@@ -36,7 +36,7 @@ void	KeyPad_Init(void)
   }
 }
 //#############################################################################################
-uint16_t	KeyPad_Scan(void)
+uint16_t	KeyPad_Scan(bool GetKeyHold)
 {
   uint16_t  key = 0;
   for(uint8_t c=0 ; c<KeyPad.ColumnSize ; c++)
@@ -54,8 +54,9 @@ uint16_t	KeyPad_Scan(void)
         {
           key |= r;
           key = (key << 8) | c;
-          while(HAL_GPIO_ReadPin((GPIO_TypeDef*)_KEYPAD_ROW_GPIO_PORT[r], _KEYPAD_ROW_GPIO_PIN[r]) == GPIO_PIN_RESET)
-            _KEYPAD_DELAY(5);
+          if(!GetKeyHold)
+			  while(HAL_GPIO_ReadPin((GPIO_TypeDef*)_KEYPAD_ROW_GPIO_PORT[r], _KEYPAD_ROW_GPIO_PIN[r]) == GPIO_PIN_RESET)
+				_KEYPAD_DELAY(5);
           return key;
         }
       }
@@ -64,12 +65,12 @@ uint16_t	KeyPad_Scan(void)
   return 0xFFFF;
 }
 //#############################################################################################
-uint16_t	KeyPad_WaitForKey(uint32_t  Timeout_ms)
+uint16_t	KeyPad_WaitForKey(uint32_t  Timeout_ms, bool GetKeyHold)
 {	
   uint16_t  keyRead;
   while(Timeout_ms==0)
   {
-    keyRead = KeyPad_Scan();
+    keyRead = KeyPad_Scan(GetKeyHold);
 		if(keyRead != 0xFFFF)
 		{
 			KeyPad.LastKey = keyRead;
@@ -80,7 +81,7 @@ uint16_t	KeyPad_WaitForKey(uint32_t  Timeout_ms)
 	uint32_t	StartTime = HAL_GetTick();
 	while(HAL_GetTick()-StartTime < Timeout_ms)
 	{
-		keyRead = KeyPad_Scan();
+		keyRead = KeyPad_Scan(GetKeyHold);
 		if(keyRead != 0xFFFF)
 		{
 			KeyPad.LastKey = keyRead;
@@ -92,9 +93,9 @@ uint16_t	KeyPad_WaitForKey(uint32_t  Timeout_ms)
 	return 0xFFFF;
 }
 //#############################################################################################
-uint8_t KeyPad_WaitForKeyGetChar(uint32_t Timeout_ms)
+uint8_t KeyPad_WaitForKeyGetChar(uint32_t Timeout_ms, bool GetKeyHold)
 {
-  switch(KeyPad_WaitForKey(Timeout_ms))
+  switch(KeyPad_WaitForKey(Timeout_ms, GetKeyHold))
   {
 	case 0x0000:
 		return ZERO;
@@ -171,6 +172,8 @@ uint8_t KeyPad_WaitForKeyGetChar(uint32_t Timeout_ms)
 		return TEST;
 	case 0x0702:
 		return UP;
+	case 0x0703:
+		return MODE;
 
 	default:
 		return 0xFF;

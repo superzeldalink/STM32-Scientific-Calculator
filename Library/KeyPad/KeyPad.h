@@ -79,11 +79,12 @@ typedef enum
   PINFTY = 100,
   NINFTY = 101,
 
+  MODE = 253,
   TEST = 254
 } Key;
 
 void      KeyPad_Init(void);
-uint16_t  KeyPad_WaitForKey(uint32_t	Timeout_ms);
-uint8_t      KeyPad_WaitForKeyGetChar(uint32_t	Timeout_ms);
+uint16_t  KeyPad_WaitForKey(uint32_t	Timeout_ms, bool GetKeyHold);
+uint8_t      KeyPad_WaitForKeyGetChar(uint32_t	Timeout_ms, bool GetKeyHold);
 
 #endif

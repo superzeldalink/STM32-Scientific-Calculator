@@ -84,6 +84,7 @@ void TogglePixel(uint8_t x, uint8_t y);
 void ClearLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1);
 void ToggleLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1);
 void ToggleRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+void ToggleRow(uint8_t y);
 void ClearPixel(uint8_t x, uint8_t y);
 void ClearFilledCircle(int16_t x0, int16_t y0, int16_t r);
 void GLCD_ICON_Print(uint8_t x,uint8_t y,const uint8_t * ICON);
