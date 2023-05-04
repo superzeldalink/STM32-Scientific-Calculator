@@ -16,4 +16,5 @@
 - [x] CALC and STO (3 variables for now)
 - [x] Convert decimal places into fractions
 - [x] Accuracy upto 10 decimal places
-- [ ] Cursor to move arround
+- [x] Cursor to move left and right
+- [x] Graph function
