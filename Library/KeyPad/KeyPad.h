@@ -4,22 +4,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
-/*
-  Author:     Nima Askari
-  WebSite:    http://www.github.com/NimaLTD
-  Instagram:  http://instagram.com/github.NimaLTD
-  Youtube:    https://www.youtube.com/channel/UCUhY7qY1klJm1d2kulr9ckw
-  
-  Version:    1.0.0
-  
-  
-  Reversion History:
-  
-  (1.0.0)
-  First Release.
-*/
-
 typedef struct
 {
 	uint8_t   ColumnSize;
@@ -61,6 +45,7 @@ typedef enum
   LN = 28,
   LOG = 29,
   LOGX = 30,
+  ABS = 31,
 
   COMMA = 48,
   S2D = 49,

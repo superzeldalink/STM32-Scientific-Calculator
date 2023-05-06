@@ -58,7 +58,7 @@ double pop(struct stack *s, uint8_t *error) {
 int is_operator(char c) {
     return c == PLUS || c == MINUS || c == MULTIPLY || c == DIVIDE || c == EXPONENT || c == SQRT || c == XRT ||
            c == FACTORIAL || c == SINE || c == COSINE || c == TANGENT ||
-		   c == LN || c == LOG || c == LOGX;
+		   c == LN || c == LOG || c == LOGX ||  c == ABS;
 }
 
 int is_variable(char c) {
@@ -86,6 +86,7 @@ int precedence(char op) {
         case LN:
         case LOG:
         case LOGX:
+        case ABS:
             return 5;
         default:
             return 0;
@@ -128,6 +129,8 @@ double operate(double x, double y, char op, uint8_t *error) {
             return log10(y)/log10(x);
         case FACTORIAL:
         	return tgamma(x + 1);
+        case ABS:
+        	return fabs(x);
         default:
             // Invalid operator
         	return 0;

@@ -152,6 +152,8 @@ uint8_t KeyPad_WaitForKeyGetChar(uint32_t Timeout_ms, bool GetKeyHold)
 	case 0x0404:
 		return S2D;
 
+	case 0x0501:
+		return ABS;
 	case 0x0503:
 		return LIMIT;
 	case 0x0504:
