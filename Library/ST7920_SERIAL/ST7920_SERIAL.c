@@ -333,6 +333,42 @@ void DrawLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1)
   }
 }
 
+void DrawDashedLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t dash_length, uint8_t gap_length)
+{
+  int dx = (x1 >= x0) ? x1 - x0 : x0 - x1;
+  int dy = (y1 >= y0) ? y1 - y0 : y0 - y1;
+  int sx = (x0 < x1) ? 1 : -1;
+  int sy = (y0 < y1) ? 1 : -1;
+  int err = dx - dy;
+  int dash_counter = 0;
+  int should_draw = 1;
+
+  for (;;)
+  {
+    if (should_draw) SetPixel(x0, y0);
+    if (x0 == x1 && y0 == y1) break;
+    int e2 = err + err;
+    if (e2 > -dy)
+    {
+      err -= dy;
+      x0 += sx;
+      dash_counter++;
+    }
+    if (e2 < dx)
+    {
+      err += dx;
+      y0 += sy;
+      dash_counter++;
+    }
+    if (dash_counter >= dash_length + gap_length)
+    {
+      dash_counter = 0;
+      should_draw = !should_draw;
+    }
+  }
+}
+
+
 /* Draw rectangle
  * start point (x,y)
  * w -> width

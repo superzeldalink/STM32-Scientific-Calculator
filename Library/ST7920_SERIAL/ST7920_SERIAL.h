@@ -14,6 +14,7 @@
 #define GLCD_CS_GPIO_Port 	LCD_RS_GPIO_Port
 
 #include "stdint.h"
+#include "stdbool.h"
 
 // A replacement for SPI_TRANSMIT
 void SendByteSPI(uint8_t byte);
@@ -56,6 +57,9 @@ void SetPixel(uint8_t x, uint8_t y);
 
 // draw line from (X0, Y0) to (X1, Y1)
 void DrawLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1);
+
+// draw dashed line from (X0, Y0) to (X1, Y1)
+void DrawDashedLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t dash_length, uint8_t gap_length);
 
 // draw rectangle from (X,Y) w- width, h- height
 void DrawRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h);

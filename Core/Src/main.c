@@ -88,6 +88,7 @@ int _write(int file, char *ptr, int len) {
 }
 
 uint8_t prev_GLCD_Buf[1024];
+uint8_t answerRow_buf[20];
 
 char input[256];
 uint8_t input_length = 0;
@@ -109,8 +110,13 @@ bool ChangeScreen() {
 	return true;
 }
 
-#include "../../Library/Screens/MathScreen.c"
+void PrintAnswer() {
+	ClearRow(ANSWER_ROW);
+	GLCD_Font_Print(16 - strlen(answerRow_buf), ANSWER_ROW, (char*) &answerRow_buf);
+}
+
 #include "../../Library/Screens/GraphScreen.c"
+#include "../../Library/Screens/MathScreen.c"
 
 /* USER CODE END 0 */
 

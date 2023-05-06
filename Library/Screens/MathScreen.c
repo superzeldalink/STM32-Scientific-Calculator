@@ -224,6 +224,7 @@ void BackSpace() {
 }
 
 void PrintError(uint8_t errorCode) {
+	ClearRow(ANSWER_ROW);
 	switch (errorCode) {
 	case 1:
 	case 2:
@@ -238,16 +239,12 @@ void PrintError(uint8_t errorCode) {
 	}
 }
 
-void PrintAnswer() {
-	ClearRow(ANSWER_ROW);
+void ShowAnswer() {
 	uint8_t errorCode = 0;
 	double answer = evaluate(input, input_length, &errorCode);
-
 	if (errorCode == 0) {
-		char answerText[256] = "";
-		sprintf(answerText, "%0.10g", answer);
-		GLCD_Font_Print(16 - strlen(answerText), ANSWER_ROW,
-				(char*) &answerText);
+		sprintf(answerRow_buf, "%0.10g", answer);
+		PrintAnswer();
 	} else {
 		PrintError(errorCode);
 	}
@@ -271,15 +268,17 @@ void MathScreen() {
 				break;
 
 			case EQUAL: {
-				if(currentMode == 0) {
-					PrintAnswer();
-					input_ptr = input_length;
-				} else if (currentMode == 1) {
-					uint8_t errorCode = 0;
-					GraphScreen(input, input_length, &errorCode);
+				if(input_length > 0) {
+					if(currentMode == 0) {
+						ShowAnswer();
+						input_ptr = input_length;
+					} else if (currentMode == 1) {
+						uint8_t errorCode = 0;
+						GraphScreen(input, input_length, &errorCode);
 
-					if (errorCode > 0) {
-						PrintError(errorCode);
+						if (errorCode > 0) {
+							PrintError(errorCode);
+						}
 					}
 				}
 				break;
@@ -390,12 +389,9 @@ void MathScreen() {
 
 			case S2D: {
 				if(currentMode == 0) {
-					ClearRow(ANSWER_ROW);
 					Fraction frac = to_fraction(answer);
-					char answerText[256] = "";
-					sprintf(answerText, "%ld/%ld", frac.num * frac.sign, frac.den);
-					GLCD_Font_Print(16 - strlen(answerText), ANSWER_ROW,
-							(char*) &answerText);
+					sprintf(answerRow_buf, "%ld/%ld", frac.num * frac.sign, frac.den);
+					PrintAnswer();
 				}
 				break;
 			}

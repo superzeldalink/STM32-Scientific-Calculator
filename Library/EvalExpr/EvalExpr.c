@@ -202,7 +202,7 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
     	if (exp[i] == DERIVATIVE || exp[i] == LIMIT) {
             char mode = exp[i];
     		// Find the comma
-    		int j, arg0Size, arg1Size;
+    		int j, arg0Size = 0, arg1Size = 0;
     		for(j = i + 2; j < size; j++) {
     			if (exp[j] == BRACKET_OPEN)
 					numOpenBrackets++;
@@ -433,7 +433,7 @@ double evaluate(char *exp, uint8_t size, uint8_t* errorCode) {
                 *errorCode = 1;
                 return 0;
             }
-            double result;
+            double result = 0.0;
             if(exp[i+1] == EQUAL_SIGN) {
                 char _exp[size + 1];
                 for (int j = 0; j < size; j++)
