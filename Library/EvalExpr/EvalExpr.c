@@ -68,17 +68,17 @@ int is_variable(char c) {
 // check the precedence of operators
 int precedence(char op) {
     switch (op) {
-        case PLUS:
-        case MINUS:
-            return 1;
-        case MULTIPLY:
-        case DIVIDE:
-            return 2;
+        case FACTORIAL:
+            return 4;
         case EXPONENT:
         case XRT:
             return 3;
-        case FACTORIAL:
-        	return 4;
+        case MULTIPLY:
+        case DIVIDE:
+            return 2;
+        case PLUS:
+        case MINUS:
+            return 1;
         case SQRT:
         case SINE:
         case COSINE:
@@ -92,6 +92,7 @@ int precedence(char op) {
             return 0;
     }
 }
+
 
 // perform arithmetic operation
 double operate(double x, double y, char op, uint8_t *error) {
@@ -220,7 +221,7 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
     			}
     		}
 
-    		double x0 = ExpEvaluate(exp + arg0Size + 3, arg1Size, errorCode);
+    		double x0 = ExpEvaluate(exp + arg0Size + i + 3, arg1Size, errorCode);
 
             double result;
             if (mode == DERIVATIVE)
@@ -258,12 +259,10 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
             push(&operands, DBL_MAX, errorCode);
 		} else if (exp[i] == NINFTY) {
             push(&operands, -DBL_MAX, errorCode);
-		}  else if (exp[i] == MINUS && is_variable(exp[i+1]) &&
+		}  else if (exp[i] == MINUS &&
     			(i == 0 || exp[i-1] == BRACKET_OPEN || is_operator(exp[i-1]))) {
-            i++;
-    		push(&operands, -GetVar(exp[i]), errorCode);
-            if (i < size - 1  && (exp[i+1] > BRACKET_CLOSE || exp[i+1] == ANSWER) && exp[i+1] != COMMA)
-                push(&operators, MULTIPLY, errorCode);
+    		push(&operands, 0, errorCode);
+    		push(&operators, MINUS, errorCode);
 		 } else if (is_variable(exp[i])) {
             push(&operands, GetVar(exp[i]), errorCode);
             if (i < size - 1  && (exp[i+1] > BRACKET_CLOSE || exp[i+1] == ANSWER) && exp[i+1] != COMMA)
@@ -291,6 +290,9 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
                 *errorCode = 3;
                 return 0;
             }
+
+            if (i < size  && (exp[i+1] > BRACKET_CLOSE || exp[i+1] == ANSWER) && exp[i+1] != COMMA)
+                push(&operators, MULTIPLY, errorCode);
             numCloseBrackets++;
         }
 
