@@ -4,6 +4,22 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
+/*
+  Author:     Nima Askari
+  WebSite:    http://www.github.com/NimaLTD
+  Instagram:  http://instagram.com/github.NimaLTD
+  Youtube:    https://www.youtube.com/channel/UCUhY7qY1klJm1d2kulr9ckw
+  
+  Version:    1.0.0
+  
+  
+  Reversion History:
+  
+  (1.0.0)
+  First Release.
+*/
+
 typedef struct
 {
 	uint8_t   ColumnSize;
@@ -57,12 +73,13 @@ typedef enum
   EQUAL_SIGN = 55,
   LIMIT = 56,
   DERIVATIVE = 57,
+  INTEGRAL = 58,
 
   X = 97,
   Y = 98,
   Z = 99,
-  PINFTY = 100,
-  NINFTY = 101,
+  PINFTY = 133,
+  NINFTY = 134,
 
   MODE = 253,
   TEST = 254

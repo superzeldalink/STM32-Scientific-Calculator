@@ -2,8 +2,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
+#include <errno.h>
 #include "EvalExpr.h"
 #include "../KeyPad/KeyPad.h"
+
+int millis = 0;
 
 // Variable Storage
 void InitSto() {
@@ -107,7 +110,7 @@ double operate(double x, double y, char op, uint8_t *error) {
             if (y == 0) {
                 // Division by zero
                 if(*error > 2 || *error == 0) *error = 4;
-                return 0;
+                return NAN;
             }
             return x / y;
         case EXPONENT:
@@ -203,10 +206,13 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
 
     // loop through each character in the expression
     for(int i = 0; i < size; i++) {
-    	if (exp[i] == DERIVATIVE || exp[i] == LIMIT) {
+    	if (!loadingShown)
+    		if (HAL_GetTick() - millis > 2000)
+    			ShowLoading();
+    	if (exp[i] == DERIVATIVE || exp[i] == LIMIT || exp[i] == INTEGRAL) {
             char mode = exp[i];
     		// Find the comma
-    		int j, arg0Size = 0, arg1Size = 0;
+    		int j, arg0Size = 0, arg1Size = 0, arg2Size = 0;
     		for(j = i + 2; j < size; j++) {
     			if (exp[j] == BRACKET_OPEN)
 					numOpenBrackets++;
@@ -214,12 +220,32 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
 					numCloseBrackets++;
 
     			if(exp[j] == COMMA && numOpenBrackets == numCloseBrackets){
-    				arg0Size = j - i - 2;
+    				if(arg0Size == 0) {
+    				    arg0Size = j - i - 2;
+    				} else {  // arg1Size
+    				    arg1Size = j - i - 2 - arg0Size - 1;
+    				}
     			} else if(exp[j+1] == BRACKET_CLOSE && numOpenBrackets == numCloseBrackets){
-    				arg1Size = j - i - 2 - arg0Size;
+    			    if (mode != INTEGRAL)
+    				    arg1Size = j - i - 2 - arg0Size;
+    				else
+    				    arg2Size = j - i - 2 - arg0Size - arg1Size - 1;
     				break;
     			}
     		}
+
+    		if(mode == DERIVATIVE || mode == LIMIT) {
+    		    if(arg0Size == 0 || arg1Size == 0 || arg2Size > 0) {
+        		    *errorCode = 1;
+        		    return 0;
+        		}
+    		} else if(mode == INTEGRAL) {
+    		    if(arg0Size == 0 || arg1Size == 0 || arg2Size == 0) {
+        		    *errorCode = 1;
+        		    return 0;
+        		}
+    		}
+
 
     		double x0 = ExpEvaluate(exp + arg0Size + i + 3, arg1Size, errorCode);
 
@@ -228,8 +254,15 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
 			    result = derivative(exp + i + 2, x0, arg0Size, errorCode);
             else if (mode == LIMIT)
 			    result = limit(exp + i + 2, x0, arg0Size, errorCode);
+			else if (mode == INTEGRAL) {
+    		    double x1 = ExpEvaluate(exp + arg0Size + arg1Size + i + 4, arg2Size, errorCode);
+    		    int maxDepth = 25;
+    		  //  if(fabs(x0) > 10e6 || fabs(x1) > 10e6)
+    		  //      maxDepth = 10;
+			    result = integrate(exp + i + 2, x0, x1, TOLERANCE, maxDepth, arg0Size, errorCode);
+			}
 
-			i += arg0Size + arg1Size + 3;
+			i += arg0Size + arg1Size + arg2Size + 4;
 
             push(&operands, result, errorCode);
     	}
@@ -398,6 +431,79 @@ double derivative(char *exp, double x, char size, uint8_t *error) {
     return result;
 }
 
+// FIND INTEGRAL
+/** Adaptive Simpson's Rule, Recursive Core */
+double adaptiveSimpsonsAux(char *exp, double a, double b, double eps,
+                          double whole, double fa, double fb, double fm, int rec,
+                          char size, uint8_t *error) {
+    double m   = (a + b)/2,  h   = (b - a)/2;
+    double lm  = (a + m)/2,  rm  = (m + b)/2;
+    // serious numerical trouble: it won't converge
+    if ((eps/2 == eps) || (a == lm)) { *error = EDOM; return whole; }
+
+    SetVar(X, lm);
+    double flm = ExpEvaluate(exp, size, error);
+    SetVar(X, rm);
+    double frm = ExpEvaluate(exp, size, error);
+
+    double left  = (h/6) * (fa + 4*flm + fm);
+    double right = (h/6) * (fm + 4*frm + fb);
+    double delta = left + right - whole;
+
+    if (rec <= 0 && *error != EDOM) *error = ERANGE;  // depth limit too shallow
+    // Lyness 1969 + Richardson extrapolation; see article
+    if (rec <= 0 || fabs(delta) <= 15*eps)
+        return left + right + (delta)/15;
+    return adaptiveSimpsonsAux(exp, a, m, eps/2, left,  fa, fm, flm, rec-1, size, error) +
+           adaptiveSimpsonsAux(exp, m, b, eps/2, right, fm, fb, frm, rec-1, size, error);
+}
+
+/** Adaptive Simpson's Rule Wrapper
+ *  (fills in cached function evaluations) */
+double adaptiveSimpsons(char *exp,     // function ptr to integrate
+                       double a, double b,      // interval [a,b]
+                       double epsilon,         // error tolerance
+                       int maxRecDepth,
+                       char size, uint8_t *error) {     // recursion cap
+
+    *error = 0;
+    double h = b - a;
+    if (h == 0) return 0;
+
+    SetVar(X, a);
+    double fa = ExpEvaluate(exp, size, error);
+    SetVar(X, b);
+    double fb = ExpEvaluate(exp, size, error);
+    SetVar(X, (a + b)/2);
+    double fm = ExpEvaluate(exp, size, error);
+
+    double S = (h/6)*(fa + 4*fm + fb);
+    return adaptiveSimpsonsAux(exp, a, b, epsilon, S, fa, fb, fm, maxRecDepth, size, error);
+}
+
+double integrate(char *exp, double a, double b, double tol, uint8_t maxDepth, char size, uint8_t *error){
+    if(!(fabs(a) == DBL_MAX && fabs(b) == DBL_MAX)) {
+        if(a == DBL_MAX) a = b + 1.5e3;
+        else if (a == -DBL_MAX) a = b - 1.5e3;
+        if(b == DBL_MAX) b = a + 1.5e3;
+        else if (b == -DBL_MAX) b = a - 1.5e3;
+    } else {
+        a = -1e4; b = 1e4;
+    }
+
+    double I = adaptiveSimpsons(exp, a, b, tol, maxDepth, size, error);
+
+    if(isnan(I) || *error > 0) {
+        if(a + b == 0)
+            I = adaptiveSimpsons(exp, a + tol, b, tol, maxDepth, size, error);
+        else if(b - a > 0)
+            I = adaptiveSimpsons(exp, a + tol, b - tol, tol, maxDepth, size, error);
+        else
+            I = adaptiveSimpsons(exp, a - tol, b + tol, tol, maxDepth, size, error);
+    }
+    return I;
+}
+
 // SOLVE
 double ExpSolve(char *exp, char size, uint8_t *error) {
     double xo = GetVar(X);
@@ -431,6 +537,8 @@ double ExpSolve(char *exp, char size, uint8_t *error) {
 }
 
 double evaluate(char *exp, uint8_t size, uint8_t* errorCode) {
+	millis = HAL_GetTick();
+
     // Find if there is an EQUAL_SIGN
     for(int i = 0; i < size; i++) {
         if(exp[i] == EQUAL_SIGN) {

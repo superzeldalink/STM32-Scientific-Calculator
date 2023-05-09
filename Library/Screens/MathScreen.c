@@ -32,8 +32,11 @@ char* GetChar(uint8_t ch) {
 	} else if (ch == LIMIT) {
 		static char c[] = { 'l', '(', 0 };
 		return c;
+	} else if (ch == INTEGRAL) {
+		static char c[] = { 'i', '(', 0 };
+		return c;
 	} else if (ch == SINE || ch == COSINE || ch == TANGENT || ch == ANSWER
-			|| ch == LOG) {
+			|| ch == LOG || ch == ABS) {
 		static char c[] = { 0, 0, 0, 0 };
 		switch (ch) {
 		case SINE:
@@ -60,6 +63,11 @@ char* GetChar(uint8_t ch) {
 			c[0] = 'l';
 			c[1] = 'o';
 			c[2] = 'g';
+			break;
+		case ABS:
+			c[0] = 'a';
+			c[1] = 'b';
+			c[2] = 's';
 			break;
 		}
 		return c;
@@ -121,10 +129,10 @@ char* GetChar(uint8_t ch) {
 			c[0] = '=';
 			break;
 		case PINFTY:
-			c[0] = 133;
+			c[0] = PINFTY;
 			break;
 		case NINFTY:
-			c[0] = 134;
+			c[0] = NINFTY;
 			break;
 		}
 		return c;
@@ -146,7 +154,7 @@ void UpdateDisp() {
 	for (int i = 0; i < input_length; i++) {
 		if (input[i] == BRACKET_OPEN
 				&& (input[i - 1] == LOGX || input[i - 1] == DERIVATIVE
-						|| input[i - 1] == LIMIT)) {
+						|| input[i - 1] == LIMIT || input[i - 1] == INTEGRAL)) {
 			charLength[i] = 0;
 		} else {
 			char *c = GetChar(input[i]);
@@ -162,7 +170,7 @@ void UpdateDisp() {
 }
 
 void AddKey(uint8_t key) {
-	if (key == LOGX || key == DERIVATIVE || key == LIMIT) {
+	if (key == LOGX || key == DERIVATIVE || key == LIMIT || key == INTEGRAL) {
 		input_length += 2;
 		for (int i = input_length - 1; i >= input_ptr + 2; i--) {
 			input[i] = input[i - 2];
@@ -186,7 +194,7 @@ void GoLeft() {
 
 	if (prevKey == BRACKET_OPEN
 			&& (preprevKey == LOGX || preprevKey == LIMIT
-					|| preprevKey == DERIVATIVE)) {
+					|| preprevKey == DERIVATIVE || preprevKey == INTEGRAL)) {
 		input_ptr--;
 	}
 }
@@ -197,7 +205,7 @@ void GoRight() {
 	input_ptr++;
 
 	if (nextNextKey == BRACKET_OPEN
-			&& (nextKey == LOGX || nextKey == LIMIT || nextKey == DERIVATIVE)) {
+			&& (nextKey == LOGX || nextKey == LIMIT || nextKey == DERIVATIVE || nextKey == INTEGRAL)) {
 		input_ptr++;
 	}
 }
@@ -208,7 +216,7 @@ void BackSpace() {
 
 	if (prevKey == BRACKET_OPEN
 			&& (preprevKey == LOGX || preprevKey == LIMIT
-					|| preprevKey == DERIVATIVE)) {
+					|| preprevKey == DERIVATIVE || preprevKey == INTEGRAL)) {
 		input_ptr -= 2;
 		for (int i = input_ptr; i < input_length - 1; i++) {
 			input[i] = input[i + 2];
@@ -226,6 +234,8 @@ void BackSpace() {
 void PrintError(uint8_t errorCode) {
 	ClearRow(ANSWER_ROW);
 	switch (errorCode) {
+	case 0:
+		break;
 	case 1:
 	case 2:
 		GLCD_Font_Print(4, ANSWER_ROW, "Syntax error");
@@ -236,14 +246,46 @@ void PrintError(uint8_t errorCode) {
 	case 4:
 		GLCD_Font_Print(7, ANSWER_ROW, "Div. by 0");
 		break;
+	case 33:
+		GLCD_Font_Print(4, ANSWER_ROW, "Out of range");
+		break;
+	default:
+		GLCD_Font_Print(6, ANSWER_ROW, "Math error");
+		break;
 	}
+}
+
+void ShowLoading() {
+	loadingShown = true;
+	memcpy(prev_GLCD_Buf, GLCD_Buf, 1024);
+	GLCD_Buf_Clear();
+	GLCD_Font_Print(0, 0, "Computing...");
+	GLCD_Font_Print(0, 2, "If it hangs,");
+	GLCD_Font_Print(0, 3, "please restart.");
+	ST7920_Update();
 }
 
 void ShowAnswer() {
 	uint8_t errorCode = 0;
 	double answer = evaluate(input, input_length, &errorCode);
+
+	if(loadingShown) {
+		memcpy(GLCD_Buf, prev_GLCD_Buf, 1024);
+		loadingShown = false;
+	}
 	if (errorCode == 0) {
-		sprintf(answerRow_buf, "%0.10g", answer);
+		if(answer == DBL_MAX) {
+			answerRow_buf[0] = PINFTY;
+			answerRow_buf[1] = 0;
+		} else if(answer == -DBL_MAX) {
+			answerRow_buf[0] = NINFTY;
+			answerRow_buf[1] = 0;
+		} else if (answer == 1 / DBL_MAX || answer == 1 / (-DBL_MAX)) {
+			answerRow_buf[0] = '0';
+			answerRow_buf[1] = 0;
+		} else {
+			sprintf(answerRow_buf, "%0.10g", answer);
+		}
 		PrintAnswer();
 	} else {
 		PrintError(errorCode);
@@ -275,6 +317,11 @@ void MathScreen() {
 					} else if (currentMode == 1) {
 						uint8_t errorCode = 0;
 						GraphScreen(input, input_length, &errorCode);
+
+						if(loadingShown) {
+							memcpy(GLCD_Buf, prev_GLCD_Buf, 1024);
+							loadingShown = false;
+						}
 
 						if (errorCode > 0) {
 							PrintError(errorCode);
@@ -370,6 +417,9 @@ void MathScreen() {
 						AddKey(DERIVATIVE);
 						break;
 					case DERIVATIVE:
+						AddKey(INTEGRAL);
+						break;
+					case INTEGRAL:
 						AddKey(LIMIT);
 						break;
 					case LOGX:
