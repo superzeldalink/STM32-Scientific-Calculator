@@ -1,6 +1,6 @@
 #include "KeyPad.h"
 #include "KeyPadConfig.h"
-#include "stm32f4xx_ll_gpio.h"
+#include "stm32f3xx_ll_gpio.h"
 #include "delay.h"
 #if (_KEYPAD_USE_FREERTOS==1)
 #include "cmsis_os.h"
