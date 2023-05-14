@@ -233,6 +233,8 @@ void BackSpace() {
 
 void PrintError(uint8_t errorCode) {
 	ClearRow(ANSWER_ROW);
+	char errorText[5];
+	sprintf(errorText, "%d", errorCode);
 	switch (errorCode) {
 	case 0:
 		break;
@@ -250,7 +252,8 @@ void PrintError(uint8_t errorCode) {
 		GLCD_Font_Print(4, ANSWER_ROW, "Out of range");
 		break;
 	default:
-		GLCD_Font_Print(6, ANSWER_ROW, "Math error");
+//		GLCD_Font_Print(6, ANSWER_ROW, "Math error");
+		GLCD_Font_Print(6, ANSWER_ROW, errorText);
 		break;
 	}
 }
@@ -265,10 +268,15 @@ void ShowLoading() {
 	ST7920_Update();
 }
 
-void ShowAnswer() {
-	uint8_t errorCode = 0;
-	double answer = evaluate(input, input_length, &errorCode);
+//void ShowReceiving() {
+//	loadingShown = true;
+//	memcpy(prev_GLCD_Buf, GLCD_Buf, 1024);
+//	GLCD_Buf_Clear();
+//	GLCD_Font_Print(0, 0, "Receiving...");
+//	ST7920_Update();
+//}
 
+void ShowAnswer(double answer, uint8_t errorCode) {
 	if(loadingShown) {
 		memcpy(GLCD_Buf, prev_GLCD_Buf, 1024);
 		loadingShown = false;
@@ -312,8 +320,37 @@ void MathScreen() {
 			case EQUAL: {
 				if(input_length > 0) {
 					if(currentMode == 0) {
-						ShowAnswer();
+						uint8_t errorCode = 0;
+						double answer = 0;
+
+						if(uartMode) {
+							uartDone = false;
+							HAL_UART_Transmit(&huart1, input, input_length, 100);
+
+							millis = HAL_GetTick();
+
+							while(HAL_GetTick() - millis <= 3000) {
+								if(uartDone) break;
+							}
+
+							if(!uartDone) {
+								strcpy(answerRow_buf, "Receive Failed.");
+								PrintAnswer();
+							} else {
+								memcpy(&answer, RxBuf, sizeof(double));
+								errorCode = RxBuf[8];
+
+								if(errorCode == 0) SetVar(ANSWER, answer);
+								ShowAnswer(answer, errorCode);
+							}
+
+						} else {
+							answer = evaluate(input, input_length, &errorCode);
+							ShowAnswer(answer, errorCode);
+						}
+
 						input_ptr = input_length;
+
 					} else if (currentMode == 1) {
 						uint8_t errorCode = 0;
 						GraphScreen(input, input_length, &errorCode);
@@ -448,6 +485,14 @@ void MathScreen() {
 
 			case MODE: {
 				if(ChangeScreen()) return;
+				break;
+			}
+
+			case TEST: {
+				if(currentMode == 0) {
+					uartMode = !uartMode;
+					TogglePixel(127, 0);
+				}
 				break;
 			}
 

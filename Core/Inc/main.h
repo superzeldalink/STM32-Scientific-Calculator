@@ -46,7 +46,7 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-
+#define STM32
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

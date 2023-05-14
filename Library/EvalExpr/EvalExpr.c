@@ -6,7 +6,6 @@
 #include "EvalExpr.h"
 #include "../KeyPad/KeyPad.h"
 
-int millis = 0;
 
 // Variable Storage
 void InitSto() {
@@ -196,6 +195,9 @@ void calculate(struct stack *operators, struct stack *operands, uint8_t* errorCo
 
 // evaluate a math expression from array
 double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
+    // Clear errors
+	*errorCode = 0;
+
     // create two stacks: one for operands and one for operators
     struct stack operands = {-1};
     struct stack operators = {-1};
@@ -206,63 +208,62 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
 
     // loop through each character in the expression
     for(int i = 0; i < size; i++) {
+#ifdef STM32
     	if (!loadingShown)
     		if (HAL_GetTick() - millis > 2000)
     			ShowLoading();
+#endif
     	if (exp[i] == DERIVATIVE || exp[i] == LIMIT || exp[i] == INTEGRAL) {
-            char mode = exp[i];
-    		// Find the comma
-    		int j, arg0Size = 0, arg1Size = 0, arg2Size = 0;
-    		for(j = i + 2; j < size; j++) {
-    			if (exp[j] == BRACKET_OPEN)
+			char mode = exp[i];
+			// Find the comma
+			int j, arg0Size = 0, arg1Size = 0, arg2Size = 0;
+			for(j = i + 2; j < size; j++) {
+				if (exp[j] == BRACKET_OPEN)
 					numOpenBrackets++;
-    			else if (exp[j] == BRACKET_CLOSE)
+				else if (exp[j] == BRACKET_CLOSE)
 					numCloseBrackets++;
 
-    			if(exp[j] == COMMA && numOpenBrackets == numCloseBrackets){
-    				if(arg0Size == 0) {
-    				    arg0Size = j - i - 2;
-    				} else {  // arg1Size
-    				    arg1Size = j - i - 2 - arg0Size - 1;
-    				}
-    			} else if(exp[j+1] == BRACKET_CLOSE && numOpenBrackets == numCloseBrackets){
-    			    if (mode != INTEGRAL)
-    				    arg1Size = j - i - 2 - arg0Size;
-    				else
-    				    arg2Size = j - i - 2 - arg0Size - arg1Size - 1;
-    				break;
-    			}
-    		}
+				if(exp[j] == COMMA && numOpenBrackets == numCloseBrackets){
+					if(arg0Size == 0) {
+						arg0Size = j - i - 2;
+					} else {  // arg1Size
+						arg1Size = j - i - 2 - arg0Size - 1;
+					}
+				} else if(exp[j+1] == BRACKET_CLOSE && numOpenBrackets == numCloseBrackets){
+					if (arg1Size == 0)
+						arg1Size = j - i - 2 - arg0Size;
+					else
+						arg2Size = j - i - 2 - arg0Size - arg1Size - 1;
+					break;
+				}
+			}
 
-    		if(mode == DERIVATIVE || mode == LIMIT) {
-    		    if(arg0Size == 0 || arg1Size == 0 || arg2Size > 0) {
-        		    *errorCode = 1;
-        		    return 0;
-        		}
-    		} else if(mode == INTEGRAL) {
-    		    if(arg0Size == 0 || arg1Size == 0 || arg2Size == 0) {
-        		    *errorCode = 1;
-        		    return 0;
-        		}
-    		}
-
+			if(mode == DERIVATIVE || mode == LIMIT) {
+				if(arg0Size == 0 || arg1Size == 0 || arg2Size > 0) {
+					*errorCode = 1;
+					return NAN;
+				}
+			} else if(mode == INTEGRAL) {
+				if(arg0Size == 0 || arg1Size == 0 || arg2Size == 0) {
+					*errorCode = 1;
+					return NAN;
+				}
+			}
 
     		double x0 = ExpEvaluate(exp + arg0Size + i + 3, arg1Size, errorCode);
 
-            double result;
-            if (mode == DERIVATIVE)
-			    result = derivative(exp + i + 2, x0, arg0Size, errorCode);
-            else if (mode == LIMIT)
-			    result = limit(exp + i + 2, x0, arg0Size, errorCode);
-			else if (mode == INTEGRAL) {
-    		    double x1 = ExpEvaluate(exp + arg0Size + arg1Size + i + 4, arg2Size, errorCode);
-    		    int maxDepth = 25;
-    		  //  if(fabs(x0) > 10e6 || fabs(x1) > 10e6)
-    		  //      maxDepth = 10;
-			    result = integrate(exp + i + 2, x0, x1, TOLERANCE, maxDepth, arg0Size, errorCode);
+    		double result = 0;
+			if (mode == DERIVATIVE) {
+				result = derivative(exp + i + 2, x0, arg0Size, errorCode);
+				i += arg0Size + arg1Size + 3;
+			} else if (mode == LIMIT) {
+				result = limit(exp + i + 2, x0, arg0Size, errorCode);
+				i += arg0Size + arg1Size + 3;
+			} else if (mode == INTEGRAL) {
+				double x1 = ExpEvaluate(exp + arg0Size + arg1Size + i + 4, arg2Size, errorCode);
+				result = integrate(exp + i + 2, x0, x1, TOLERANCE, 25, arg0Size, errorCode);
+				i += arg0Size + arg1Size + arg2Size + 4;
 			}
-
-			i += arg0Size + arg1Size + arg2Size + 4;
 
             push(&operands, result, errorCode);
     	}
@@ -404,18 +405,25 @@ double derivative(char *exp, double x, char size, uint8_t *error) {
     double h = 1e-4;  // initial step size
     double t = GetVar(X);
 
+    double f1, f2, delta;
+
+    // Check for singularity
+    f1 = ExpEvaluate(exp, size, error);
+    if(*error == 4)
+        return NAN;
+
     double result, prev_result;
     for(int i = 0 ; i < 10; i++) {
         SetVar(X, x+h);
-        double f1 = ExpEvaluate(exp, size, error);
+        f1 = ExpEvaluate(exp, size, error);
         SetVar(X, x-h);
-        double f2 = ExpEvaluate(exp, size, error);
+        f2 = ExpEvaluate(exp, size, error);
         result = (f1 - f2)/(2*h);
         if(i == 0) {
         	 prev_result = result;
         	 continue;
         }
-        double delta = fabs(prev_result - result);
+        delta = fabs(prev_result - result);
         if(delta < TOLERANCE) {
             break;
         } else if (delta > 1) {
@@ -537,7 +545,9 @@ double ExpSolve(char *exp, char size, uint8_t *error) {
 }
 
 double evaluate(char *exp, uint8_t size, uint8_t* errorCode) {
+#ifdef STM32
 	millis = HAL_GetTick();
+#endif
 
     // Find if there is an EQUAL_SIGN
     for(int i = 0; i < size; i++) {

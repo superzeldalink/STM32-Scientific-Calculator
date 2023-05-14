@@ -53,8 +53,11 @@
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 
-/* USER CODE BEGIN PV */
+UART_HandleTypeDef huart1;
 
+/* USER CODE BEGIN PV */
+#define RxBuf_SIZE 9
+#define MainBuf_SIZE 9
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -62,12 +65,18 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+uint8_t RxBuf[RxBuf_SIZE];
+uint8_t MainBuf[MainBuf_SIZE];
+uint8_t oldPos, newPos;
+
 uint8_t prev_GLCD_Buf[1024];
 uint8_t answerRow_buf[20];
 
@@ -77,7 +86,11 @@ uint8_t input_ptr = 0;
 uint8_t disX = 0, disY = 0;
 
 uint8_t currentMode = 0;
+bool uartMode = false;
+volatile bool uartDone = false;
 bool loadingShown = false;
+
+int millis = 0;
 
 #include "../../Library/Screens/Menu/SelectMode.c"
 
@@ -136,6 +149,7 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   KeyPad_Init();
   	ST7920_Init();
@@ -144,6 +158,10 @@ int main(void)
   	ST7920_Clear();
 
   	InitSto();
+
+  	HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, 0);
+
+  	HAL_UART_Receive_IT (&huart1, RxBuf, RxBuf_SIZE);
 
   /* USER CODE END 2 */
 
@@ -161,6 +179,8 @@ int main(void)
 
 		GLCD_Buf_Clear();
 		ST7920_Update();
+
+		uartMode = false;
 
 		switch(currentMode) {
 		case 0:
@@ -207,7 +227,8 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_TIM1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_TIM1;
+  PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
   PeriphClkInit.Tim1ClockSelection = RCC_TIM1CLK_HCLK;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
@@ -308,6 +329,41 @@ static void MX_TIM2_Init(void)
 }
 
 /**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 9600;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -373,6 +429,15 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if (huart->Instance == USART1) {
+		uartDone = true;
+		/* start the INT again */
+		HAL_UART_Receive_IT (&huart1, RxBuf, RxBuf_SIZE);
+	}
+}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM2) {
 		ToggleCursor();
