@@ -113,6 +113,7 @@ void PrintAnswer() {
 #include "../../Library/EvalExpr/EvalExpr.h"
 #include "../../Library/EvalExpr/EvalExpr.c"
 
+#include "../../Library/Screens/SplashScreen.c"
 #include "../../Library/Screens/GraphScreen.c"
 #include "../../Library/Screens/MathScreen.c"
 
@@ -162,6 +163,8 @@ int main(void)
   	HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, 0);
 
   	HAL_UART_Receive_IT (&huart1, RxBuf, RxBuf_SIZE);
+
+  	SplashScreen();
 
   /* USER CODE END 2 */
 
