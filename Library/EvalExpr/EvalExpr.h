@@ -21,11 +21,11 @@ struct stack {
 };
 
 // evaluate a math expression from string
-double evaluate(char *exp, uint8_t size, uint8_t* errorCode);
-double limit(char *exp, double x0, char size, uint8_t *error);
-double derivative(char *exp, double x, char size, uint8_t *error);
-double integrate(char *exp, double a, double b, double tol, uint8_t maxDepth, char size, uint8_t *error);
-double ExpSolve(char *exp, char size, uint8_t *error);
+double evaluate(uint8_t *exp, uint8_t size, uint8_t* errorCode);
+double limit(uint8_t *exp, double x0, char size, uint8_t *error);
+double derivative(uint8_t *exp, double x, char size, uint8_t *error);
+double integrate(uint8_t *exp, double a, double b, double tol, uint8_t maxDepth, char size, uint8_t *error);
+double ExpSolve(uint8_t *exp, uint8_t size, uint8_t *error);
 
 typedef struct {
     int sign;

@@ -140,7 +140,7 @@ double operate(double x, double y, char op, uint8_t *error) {
     }
 }
 
-double itod(const char *digits, char* max_addr, int* endi) {
+double itod(const uint8_t *digits, uint8_t* max_addr, int* endi) {
     double sign = 1.0f, value = 0.0f, decimal = 0.0f;
     int has_decimal = 0, digits_before_decimal = 0;
 
@@ -194,7 +194,13 @@ void calculate(struct stack *operators, struct stack *operands, uint8_t* errorCo
 }
 
 // evaluate a math expression from array
-double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
+double ExpEvaluate(uint8_t *exp, uint8_t size, uint8_t* errorCode) {
+#ifdef STM32
+	  // Toggle STATUS_LED
+	  uint32_t odr = STATUS_LED_GPIO_Port->ODR;
+      STATUS_LED_GPIO_Port->BSRR = ((odr & STATUS_LED_Pin) << 16U) | (~odr & STATUS_LED_Pin);
+#endif
+
     // Clear errors
 	*errorCode = 0;
 
@@ -210,8 +216,15 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
     for(int i = 0; i < size; i++) {
 #ifdef STM32
     	if (!loadingShown)
-    		if (HAL_GetTick() - millis > 2000)
-    			ShowLoading();
+    		if (HAL_GetTick() - millis > 2000) {
+    			loadingShown = true;
+    			memcpy(prev_GLCD_Buf, GLCD_Buf, 1024);
+    			GLCD_Buf_Clear();
+    			GLCD_Font_Print(0, 0, "Computing...");
+    			GLCD_Font_Print(0, 2, "If it hangs,");
+    			GLCD_Font_Print(0, 3, "please restart.");
+    			ST7920_Update();
+    		}
 #endif
     	if (exp[i] == DERIVATIVE || exp[i] == LIMIT || exp[i] == INTEGRAL) {
 			char mode = exp[i];
@@ -380,7 +393,7 @@ double ExpEvaluate(char *exp, uint8_t size, uint8_t* errorCode) {
 }
 
 // FIND LIMIT
-double limit(char *exp, double x0, char size, uint8_t *error) {
+double limit(uint8_t *exp, double x0, char size, uint8_t *error) {
     double h = TOLERANCE; // small number for approximating limit
     double t = GetVar(X);
     SetVar(X, x0 + h);
@@ -401,7 +414,7 @@ double limit(char *exp, double x0, char size, uint8_t *error) {
 
 // FIND DERIVATIVE
 // Using central difference formula
-double derivative(char *exp, double x, char size, uint8_t *error) {
+double derivative(uint8_t *exp, double x, char size, uint8_t *error) {
     double h = 1e-4;  // initial step size
     double t = GetVar(X);
 
@@ -441,7 +454,7 @@ double derivative(char *exp, double x, char size, uint8_t *error) {
 
 // FIND INTEGRAL
 /** Adaptive Simpson's Rule, Recursive Core */
-double adaptiveSimpsonsAux(char *exp, double a, double b, double eps,
+double adaptiveSimpsonsAux(uint8_t *exp, double a, double b, double eps,
                           double whole, double fa, double fb, double fm, int rec,
                           char size, uint8_t *error) {
     double m   = (a + b)/2,  h   = (b - a)/2;
@@ -468,7 +481,7 @@ double adaptiveSimpsonsAux(char *exp, double a, double b, double eps,
 
 /** Adaptive Simpson's Rule Wrapper
  *  (fills in cached function evaluations) */
-double adaptiveSimpsons(char *exp,     // function ptr to integrate
+double adaptiveSimpsons(uint8_t *exp,     // function ptr to integrate
                        double a, double b,      // interval [a,b]
                        double epsilon,         // error tolerance
                        int maxRecDepth,
@@ -489,7 +502,7 @@ double adaptiveSimpsons(char *exp,     // function ptr to integrate
     return adaptiveSimpsonsAux(exp, a, b, epsilon, S, fa, fb, fm, maxRecDepth, size, error);
 }
 
-double integrate(char *exp, double a, double b, double tol, uint8_t maxDepth, char size, uint8_t *error){
+double integrate(uint8_t *exp, double a, double b, double tol, uint8_t maxDepth, char size, uint8_t *error){
     if(!(fabs(a) == DBL_MAX && fabs(b) == DBL_MAX)) {
         if(a == DBL_MAX) a = b + 1.5e3;
         else if (a == -DBL_MAX) a = b - 1.5e3;
@@ -513,7 +526,7 @@ double integrate(char *exp, double a, double b, double tol, uint8_t maxDepth, ch
 }
 
 // SOLVE
-double ExpSolve(char *exp, char size, uint8_t *error) {
+double ExpSolve(uint8_t *exp, uint8_t size, uint8_t *error) {
     double xo = GetVar(X);
     double x = GetVar(X);
     double t = GetVar(X);
@@ -544,11 +557,12 @@ double ExpSolve(char *exp, char size, uint8_t *error) {
     return x;
 }
 
-double evaluate(char *exp, uint8_t size, uint8_t* errorCode) {
+double evaluate(uint8_t *exp, uint8_t size, uint8_t* errorCode) {
 #ifdef STM32
 	millis = HAL_GetTick();
 #endif
 
+    double result = 0.0;
     // Find if there is an EQUAL_SIGN
     for(int i = 0; i < size; i++) {
         if(exp[i] == EQUAL_SIGN) {
@@ -556,9 +570,8 @@ double evaluate(char *exp, uint8_t size, uint8_t* errorCode) {
                 *errorCode = 1;
                 return 0;
             }
-            double result = 0.0;
             if(exp[i+1] == EQUAL_SIGN) {
-                char _exp[size + 1];
+            	uint8_t _exp[size + 1];
                 for (int j = 0; j < size; j++)
                     _exp[j] = exp[j];
                 _exp[i] = MINUS;
@@ -566,6 +579,7 @@ double evaluate(char *exp, uint8_t size, uint8_t* errorCode) {
                 _exp[size] = BRACKET_CLOSE;
                 result = ExpSolve(_exp, size + 1, errorCode);
                 SetVar(ANSWER, result);
+                STATUS_LED_GPIO_Port->BRR = STATUS_LED_Pin;
                 return result;
             } else {
                 if (i == 1 && is_variable(exp[i - 1])) {
@@ -577,11 +591,14 @@ double evaluate(char *exp, uint8_t size, uint8_t* errorCode) {
                     if (*errorCode == 0)
                         SetVar(exp[i+1], result);
                 }
+                STATUS_LED_GPIO_Port->BRR = STATUS_LED_Pin;
                 return result;
             }
         }
     }
-	return ExpEvaluate(exp, size, errorCode);
+	result = ExpEvaluate(exp, size, errorCode);
+    STATUS_LED_GPIO_Port->BRR = STATUS_LED_Pin;
+    return result;
 }
 
 // CONVERT DOUBLE TO FRACTION

@@ -4,10 +4,6 @@ uint8_t charLength[256];
 bool cursorState = false;
 uint8_t cursor_ptr = 0;
 
-void ClearRow(int row) {
-	GLCD_Font_Print(0, row, "                ");
-}
-
 void ToggleCursor() {
 	cursorState = !cursorState;
 	ToggleRectangle(disX * 8, disY * 8, 1, 6);
@@ -252,20 +248,10 @@ void PrintError(uint8_t errorCode) {
 		GLCD_Font_Print(4, ANSWER_ROW, "Out of range");
 		break;
 	default:
-//		GLCD_Font_Print(6, ANSWER_ROW, "Math error");
-		GLCD_Font_Print(6, ANSWER_ROW, errorText);
+		GLCD_Font_Print(6, ANSWER_ROW, "Math error");
+//		GLCD_Font_Print(6, ANSWER_ROW, errorText);
 		break;
 	}
-}
-
-void ShowLoading() {
-	loadingShown = true;
-	memcpy(prev_GLCD_Buf, GLCD_Buf, 1024);
-	GLCD_Buf_Clear();
-	GLCD_Font_Print(0, 0, "Computing...");
-	GLCD_Font_Print(0, 2, "If it hangs,");
-	GLCD_Font_Print(0, 3, "please restart.");
-	ST7920_Update();
 }
 
 //void ShowReceiving() {
@@ -304,7 +290,7 @@ void MathScreen() {
 	UpdateDisp();
 	HAL_TIM_Base_Start_IT(&htim2);
 	while (1) {
-		uint8_t key = KeyPad_WaitForKeyGetChar(0, false);
+		uint8_t key = KeyPad_WaitForKeyGetChar(KEY_TIMEOUT_MS, false);
 		if (key != 0xFF) {
 			HAL_TIM_Base_Stop_IT(&htim2);
 			if (cursorState)

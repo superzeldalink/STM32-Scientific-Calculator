@@ -78,9 +78,9 @@ uint8_t MainBuf[MainBuf_SIZE];
 uint8_t oldPos, newPos;
 
 uint8_t prev_GLCD_Buf[1024];
-uint8_t answerRow_buf[20];
+char answerRow_buf[20];
 
-char input[256];
+uint8_t input[256];
 uint8_t input_length = 0;
 uint8_t input_ptr = 0;
 uint8_t disX = 0, disY = 0;
@@ -107,7 +107,7 @@ bool ChangeScreen() {
 
 void PrintAnswer() {
 	ClearRow(ANSWER_ROW);
-	GLCD_Font_Print(16 - strlen(answerRow_buf), ANSWER_ROW, (char*) &answerRow_buf);
+	GLCD_Font_Print(16 - strlen(answerRow_buf), ANSWER_ROW, (char*)&answerRow_buf);
 }
 
 #include "../../Library/EvalExpr/EvalExpr.h"
@@ -160,7 +160,7 @@ int main(void)
 
   	InitSto();
 
-  	HAL_GPIO_WritePin(STATUS_LED_GPIO_Port, STATUS_LED_Pin, 0);
+	((GPIO_TypeDef*)(STATUS_LED_GPIO_Port))->BRR = STATUS_LED_Pin;
 
   	HAL_UART_Receive_IT (&huart1, RxBuf, RxBuf_SIZE);
 

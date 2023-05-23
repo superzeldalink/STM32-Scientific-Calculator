@@ -5,7 +5,7 @@ bool cursorMode = false;
 
 uint8_t orig_graph[1024];
 
-void Graph(char *exp, uint8_t size, uint8_t* errorCode) {
+void Graph(uint8_t *exp, uint8_t size, uint8_t* errorCode) {
 	GLCD_Buf_Clear();
     double step = scale * 2 / 128;
 
@@ -52,7 +52,7 @@ void Graph(char *exp, uint8_t size, uint8_t* errorCode) {
 	}
 }
 
-void GraphScreen(char *exp, uint8_t size, uint8_t* errorCode) {
+void GraphScreen(uint8_t *exp, uint8_t size, uint8_t* errorCode) {
     double t = GetVar(X);
 	Graph(exp, input_length, errorCode);
 
@@ -63,7 +63,7 @@ void GraphScreen(char *exp, uint8_t size, uint8_t* errorCode) {
 
     ST7920_Update();
     while (1) {
-		uint8_t key = KeyPad_WaitForKeyGetChar(0, true);
+		uint8_t key = KeyPad_WaitForKeyGetChar(KEY_TIMEOUT_MS, true);
 		if (key != 0xFF) {
 		    double step = (scale * 2 / 128);
 		    double moveStep = step * 5;
@@ -123,7 +123,9 @@ void GraphScreen(char *exp, uint8_t size, uint8_t* errorCode) {
 
 					default:
 						cursorMode = false;
-						break;
+						memcpy(GLCD_Buf, orig_graph, 1024);
+						ST7920_Update();
+						continue;
 				}
 			}
 
@@ -144,7 +146,7 @@ void GraphScreen(char *exp, uint8_t size, uint8_t* errorCode) {
 				if(cursorY < 64 && cursorY >= 0)
 					DrawDashedLine(0, cursorY, 127, cursorY, 2, 3);
 
-				sprintf(answerRow_buf, "%0.3g;%0.3g", x, y);
+				sprintf((char*)answerRow_buf, "%0.3g;%0.3g", x, y);
 				PrintAnswer();
 			} else
 				Graph(exp, input_length, errorCode);

@@ -70,6 +70,6 @@ const unsigned char logobk [] = {
 void SplashScreen(){
 	memcpy(GLCD_Buf, logobk, 1024);
 	ST7920_Update();
-	HAL_Delay(1000);
+	HAL_Delay(500);
 	GLCD_Buf_Clear();
 }

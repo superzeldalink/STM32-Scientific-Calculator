@@ -47,6 +47,7 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 #define STM32
+#define KEY_TIMEOUT_MS 20
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
