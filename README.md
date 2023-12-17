@@ -11,10 +11,15 @@
   - [x] Factorial $!$
 - [x] Limits
 - [x] Differentiation
-- [ ] Integration
+- [x] Integration
 - [x] Solve equation
 - [x] CALC and STO (3 variables for now)
 - [x] Convert decimal places into fractions
 - [x] Accuracy upto 10 decimal places
 - [x] Cursor to move left and right
 - [x] Graph function
+
+## Documents
+- Schematic: [pcb_schematic.pdf](Report/PCB/pcb_schematic.pdf)
+- PCB: [pcb.pdf](Report/PCB/pcb.pdf)
+- Project Report: [Report.pdf](Report.pdf)
